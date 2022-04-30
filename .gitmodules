@@ -1,0 +1,6 @@
+[submodule "lib/sdsl-lite"]
+	path = lib/sdsl-lite
+	url = https://github.com/vgteam/sdsl-lite.git
+[submodule "lib/ds2i"]
+	path = lib/ds2i
+	url = https://github.com/aboffa/ds2i.git

@@ -1,0 +1,13 @@
+add_executable(tests_utils main.cpp tests_utils.cpp)
+target_link_libraries(tests_utils sdsl succinct ${Boost_LIBRARIES})
+
+add_executable(tests_single_encoders_128 main.cpp tests_single_encoders_128.cpp)
+target_link_libraries(tests_single_encoders_128 sdsl succinct ${Boost_LIBRARIES})
+
+add_executable(tests_entire_trie_128_big_alphabet main.cpp tests_entire_trie_128_big_alphabet.cpp)
+target_link_libraries(tests_entire_trie_128_big_alphabet sdsl succinct ${Boost_LIBRARIES})
+target_compile_definitions(tests_entire_trie_128_big_alphabet PRIVATE BIG_ALPHABET)
+
+add_executable(tests_entire_trie_128_small_alphabet main.cpp tests_entire_trie_128_small_alphabet.cpp)
+target_link_libraries(tests_entire_trie_128_small_alphabet sdsl succinct ${Boost_LIBRARIES})
+
