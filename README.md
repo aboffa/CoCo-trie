@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/aboffa/CoCo-trie/blob/main/static/coco-logo.png" height=300 />
+  <img src="https://github.com/aboffa/CoCo-trie/blob/main/static/coco-logo.png" height=150 />
 </p>
 
 # CoCo-trie
@@ -7,6 +7,8 @@
 ## What is it? :mega:
 
 A trie shaped data structure indexing a set of strings. CoCo-trie compresses and collapses subtrees in a principled and effective  way.
+
+---
 
 ## Build the project :rocket:
 
@@ -21,6 +23,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -S .. -B .
 make -j
 ```
 
+---
 
 ## Run the benchmark
 
@@ -43,6 +46,8 @@ To preprocess the dataset and get the shortest prefix of every string that disti
 
 To get 12-mers from `dna` dataset execute the code in the script `extract_k_mers.py`. 
 
+---
+
 ## Run the tests
 For executing the tests:
 
@@ -56,5 +61,7 @@ cd build/test/
 
 ---
 
+## License
 
+This project is released for academic purposes under the terms of the GNU General Public License v3.0.
 
