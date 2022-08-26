@@ -6,13 +6,20 @@
 
 ## What is it? :mega:
 
-A trie shaped data structure indexing a set of strings. CoCo-trie compresses and collapses subtrees in a principled and effective  way.
+A data-aware trie shaped data structure indexing and compressing a set of strings. It is designed, implemented, and tested by the [A<sup>3</sup> lab](http://acube.di.unipi.it/). 
 
----
+CoCo-trie compresses and collapses subtrees in a principled and effective  way.
+
+It hinges upon a data-aware optimisation scheme that selects the best subtries to collapse based on a pool of succinct encoding schemes in order to minimise the overall space occupancy.
+
+An introduction to string dictionary, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the paper:
+
+>  A. Boffa, P. Ferragina, F. Tosoni, and G. Vinciguerra, “Compressed string dictionaries via data-aware subtrie compaction,” SPIRE 2022.
+
 
 ## Build the project :rocket:
 
-To build the CoCo trie:
+To build the CoCo-trie:
 
 ```
 git submodule update --init --recursive
@@ -23,11 +30,10 @@ cmake -DCMAKE_BUILD_TYPE=Release -S .. -B .
 make -j
 ```
 
----
 
 ## Run the benchmark
 
-Example datasets are in the directory `dataset`. To get the space / time performance run:
+Example datasets are in the directory `dataset`. To get the space/time performance run:
 ```bash
 cd build
 ./coco-trie_bench_big_alphabet ../dataset/it-2004.urls_no_suffixes_small
@@ -46,7 +52,6 @@ To preprocess the dataset and get the shortest prefix of every string that disti
 
 To get 12-mers from `dna` dataset execute the code in the script `extract_k_mers.py`. 
 
----
 
 ## Run the tests
 For executing the tests:
@@ -59,9 +64,16 @@ cd build/test/
 ./tests_entire_trie_128_small_alphabet.cpp
 ```
 
----
-
 ## License
 
 This project is released for academic purposes under the terms of the GNU General Public License v3.0.
 
+Please, cite the paper:
+
+```tex
+@inproceedings{Boffa:2022spire,
+author = {Boffa, Antonio and Ferragina, Paolo and Tosoni, Francesco and Vinciguerra, Giorgio},
+booktitle = {Proceedings of the 29th International Symposium on String Processing and Information Retrieval (SPIRE)},
+title = {Compressed string dictionaries via data-aware subtrie compaction},
+year = {2022}}
+```
