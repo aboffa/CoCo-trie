@@ -4,9 +4,11 @@
 
 # CoCo-trie
 
-## What is it? :mega:
+[![build_test](https://github.com/aboffa/CoCo-trie/actions/workflows/build_test.yml/badge.svg)](https://github.com/aboffa/CoCo-trie/actions/workflows/build_test.yml)
 
-A data-aware trie shaped data structure indexing and compressing a set of strings. It is designed, implemented, and tested by the [A<sup>3</sup> lab](http://acube.di.unipi.it/). 
+## What is it? 📣
+
+A data-aware trie shaped data structure for indexing and compressing a set of strings. It is designed and implemented by the [A<sup>3</sup> lab](http://acube.di.unipi.it/). 
 
 CoCo-trie compresses and collapses subtrees in a principled and effective  way.
 
@@ -14,10 +16,10 @@ It hinges upon a data-aware optimisation scheme that selects the best subtries t
 
 An introduction to string dictionary, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the paper:
 
->  A. Boffa, P. Ferragina, F. Tosoni, and G. Vinciguerra, “Compressed string dictionaries via data-aware subtrie compaction,” SPIRE 2022.
+>  A. Boffa, P. Ferragina, F. Tosoni, and G. Vinciguerra, “Compressed string dictionaries via data-aware subtrie compaction” SPIRE 2022.
 
 
-## Build the project :rocket:
+## Build the project 🔧
 
 To build the CoCo-trie:
 
@@ -30,8 +32,33 @@ cmake -DCMAKE_BUILD_TYPE=Release -S .. -B .
 make -j
 ```
 
+## Run the example 🏃
 
-## Run the benchmark
+```c++
+int main() {
+    std::vector<std::string> dataset = {"compressed", "data", "structure", "trie"};
+    datasetStats ds = dataset_stats_from_vector(dataset);
+
+    // Global variables
+    MIN_CHAR = ds.get_min_char();
+    ALPHABET_SIZE = ds.get_alphabet_size();
+
+    CoCo_fast<> coco(dataset);
+
+    coco.size_in_bits(); // return number of bits
+
+    coco.look_up("compressed"); // returns id 1
+    coco.look_up("data"); // returns id 2
+    coco.look_up("structure"); // returns id 3
+    coco.look_up("trie"); // returns id 4
+
+    coco.look_up("SPIRE"); // returns -1, the strings doesn't belong to the set
+
+    return 0;
+}
+
+```
+## Run the benchmark 🚀
 
 Example datasets are in the directory `dataset`. To get the space/time performance run:
 ```bash
@@ -53,7 +80,7 @@ To preprocess the dataset and get the shortest prefix of every string that disti
 To get 12-mers from `dna` dataset execute the code in the script `extract_k_mers.py`. 
 
 
-## Run the tests
+## Run the tests 🛫
 For executing the tests:
 
 ```bash
@@ -64,7 +91,7 @@ cd build/test/
 ./tests_entire_trie_128_small_alphabet.cpp
 ```
 
-## License
+## License 🪪
 
 This project is released for academic purposes under the terms of the GNU General Public License v3.0.
 

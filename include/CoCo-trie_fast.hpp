@@ -33,7 +33,7 @@ struct fixed_node {
 
 #pragma pack(pop)
 
-template<uint8_t MIN_L, typename code_type, uint8_t MAX_L_THRS, uint8_t space_relaxation = 0>
+template<uint8_t MIN_L = 1, typename code_type = uint128_t, uint8_t MAX_L_THRS = MAX_L_THRS, uint8_t space_relaxation = 0>
 class CoCo_fast {
 public:
     using rank1_type = sdsl::rank_support_v<1>;
@@ -159,15 +159,11 @@ public:
         return (to_search == read_code) ? read_code_idx + 2 : -1;
     }
 
-    CoCo_fast(Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation> &uncompacted) {
-        topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
-        internal_fixed.reserve(uncompacted.global_number_nodes_CoCo);
+    template<typename root_type>
+    void build_CoCo_from_uncompated_trie(root_type root) {
         succinct::bit_vector_builder internal_variable_tmp;
-        std::queue<typename Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::TrieNode_lw *> q;
-        q.push(uncompacted.root);
-
-        num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
-
+        std::queue<root_type> q;
+        q.push(root);
         while (!q.empty()) {
             typename Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::TrieNode_lw *node = q.front();
             q.pop();
@@ -290,6 +286,33 @@ public:
         internal_fixed.shrink_to_fit();
         internal_variable = std::make_unique<succinct::bit_vector>(&internal_variable_tmp);
         assert(internal_variable->size() > 0);
+    }
+
+    CoCo_fast(std::vector<std::string> &dataset) {
+        Trie_lw<> uncompacted;
+        // filling the uncompacted trie
+        for (int i = 0; i < dataset.size(); i++)
+            uncompacted.insert(dataset[i]);
+
+        // computing the best number of levels to collapse into the nodes
+        uncompacted.space_cost_all_nodes();
+        uncompacted.build_actual_CoCo_children();
+
+        topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
+        internal_fixed.reserve(uncompacted.global_number_nodes_CoCo);
+
+        num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
+
+        build_CoCo_from_uncompated_trie(uncompacted.root);
+    }
+
+    CoCo_fast(Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation> &uncompacted) {
+        topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
+        internal_fixed.reserve(uncompacted.global_number_nodes_CoCo);
+
+        num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
+
+        build_CoCo_from_uncompated_trie(uncompacted.root);
     }
 
     // return a unique id for a string to_search of -1 if it does not exist

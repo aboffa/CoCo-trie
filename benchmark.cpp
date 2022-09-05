@@ -26,9 +26,10 @@
 
 typedef unsigned __int128 uint128_t;
 
-void usage(char **argv)  {
+void usage(char **argv) {
     std::cout << "Usage: " << argv[0] << " <filename1> <filename2> ..." << std::endl;
-    std::cout << " - <filenames> must be files with strings separated by endlines (\\n). See dataset directory" << std::endl;
+    std::cout << " - <filenames> must be files with strings separated by endlines (\\n). See dataset directory"
+              << std::endl;
 }
 
 template<typename uncompact_trie_t, typename CoCo_trie_t>
@@ -48,7 +49,7 @@ void test_trie(uncompact_trie_t &trie, uint8_t l_fixed, std::vector<std::string>
                       weighted_sum += (index + 1) * a;
                       index++;
                   });
-    avg_jump = (static_cast<double>(weighted_sum) / sum);
+    avg_jump = (static_cast<double>(weighted_sum) / static_cast<double>(sum));
 
     trie.build_actual_CoCo_children();
 

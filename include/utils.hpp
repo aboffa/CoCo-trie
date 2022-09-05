@@ -140,7 +140,7 @@ struct datasetStats {
 
     void print(bool print_chars = false) const {
         std::cout << "- average_lcp: " << average_lcp << std::endl;
-        std::cout << "- average_lenght: " << average_length << std::endl;
+        std::cout << "- average_length: " << average_length << std::endl;
         std::cout << "- max_size: " << max_size << std::endl;
         std::cout << "- min_size: " << min_size << std::endl;
         std::cout << "- min_char: " << min_char << " " << (uint) min_char << std::endl;
@@ -156,6 +156,16 @@ struct datasetStats {
             }
         }
         std::cout << "- num_chars: " << num_chars << std::endl << std::flush;
+    }
+
+    size_t get_alphabet_size() const {
+        assert(!chars.empty());
+        return chars.rbegin()->first - chars.begin()->first + 2;
+    }
+
+    char get_min_char() const {
+        assert(min_size != CHAR_MAX);
+        return min_char;
     }
 };
 
@@ -176,7 +186,8 @@ inline void static_for(Lambda const &f) {
     }
 }
 
-size_t lcp(std::string &a, std::string &b) {
+template<typename string_t>
+size_t lcp(string_t a, string_t b) {
     size_t result = 0;
     for (size_t i = 0; i < std::min(a.size(), b.size()); i++) {
         if (a[i] == b[i])
@@ -185,6 +196,34 @@ size_t lcp(std::string &a, std::string &b) {
             break;
     }
     return result;
+}
+
+datasetStats dataset_stats_from_vector(std::vector<std::string> const &strings) {
+    datasetStats ds;
+    for (std::string line: strings) {
+        if (!line.empty() and checkIsPrintable(line)) {
+            if (!strings.empty()) {
+                ds.average_lcp += static_cast<double>(lcp(strings.back(), line));
+            }
+            ds.num_chars += line.size();
+            for (auto c: line) {
+                if (ds.chars.find(c) == ds.chars.end())
+                    ds.chars[c] = 1;
+                else
+                    ds.chars[c]++;
+            }
+            ds.average_length += static_cast<double>(line.size());
+            ds.max_size = std::max(line.size(), ds.max_size);
+            ds.min_size = std::min(line.size(), ds.min_size);
+        }
+    }
+    assert(!strings.empty());
+    ds.min_char = ds.chars.begin()->first;
+    ds.max_char = ds.chars.rbegin()->first;
+    ds.num_strings = strings.size();
+    ds.average_length /= static_cast<double>(ds.num_strings);
+    ds.average_lcp /= static_cast<double>(ds.num_strings);
+    return ds;
 }
 
 datasetStats load_data_from_file(std::vector<std::string> &strings, std::string &filename) {
@@ -197,7 +236,7 @@ datasetStats load_data_from_file(std::vector<std::string> &strings, std::string 
     for (std::string line; getline(input, line);) {
         if (!line.empty() and checkIsPrintable(line)) {
             if (!strings.empty()) {
-                ds.average_lcp += static_cast<double>(lcp(strings.back(), line));
+                ds.average_lcp += static_cast<double>(lcp<std::string &>(strings.back(), line));
             }
             strings.push_back(line);
             ds.num_chars += line.size();

@@ -25,7 +25,7 @@
 
 typedef unsigned __int128 uint128_t;
 
-template<uint8_t MIN_L, typename code_type, uint8_t MAX_L_THRS, uint8_t space_relaxation = 0>
+template<uint8_t MIN_L = 1, typename code_type = uint128_t, uint8_t MAX_L_THRS = MAX_L_THRS, uint8_t space_relaxation = 0>
 class Trie_lw {
 public:
     struct TrieNode_lw {
@@ -270,12 +270,12 @@ public:
     }
 
     // computes for each node of the trie the vector spacecost, the best l and the best value of spacecost
-    void space_cost_all_nodes(uint8_t l_fixed) {
+    void space_cost_all_nodes(uint8_t l_fixed = 0) {
         space_cost_all_nodes_recursive(this->root, l_fixed);
     }
 
-    // recursively computes for the node source the trie the vector spacecost, the best l and the best value of spacecost
-    // assuming these values are already computed for all the descendets
+    // recursively computes the vector spacecost, the best l (number of levels to collapse) and the best value of
+    // spacecost for the node source, assuming these values are already computed for all the descendants
     void space_cost_all_nodes_recursive(TrieNode_lw *source, uint8_t l_fixed) {
         if (source->children.empty()) {
             return;
@@ -303,7 +303,7 @@ public:
                                      [](const auto &a, const auto &b) {
                                          return (a <= b);
                                      }) - source->spacecost.begin();
-            if constexpr(space_relaxation > 0) {
+            if constexpr (space_relaxation > 0) {
                 auto best_cost = source->spacecost[source->l_idx];
                 auto i = source->l_idx + 1;
                 for (; i < source->spacecost.size(); i++) {
@@ -385,15 +385,14 @@ public:
         source->u_vec_real.resize(DELTA_L_AMAP, 0);
         source->n_vec.resize(DELTA_L_AMAP, 0);
 
-        /*
-         * in_n[i] number of internal nodes at level i
-         * lf_n[i] number of leaf nodes at level i
-         * bc_in[i] sum of best (i.e. min) costs of internal nodes at level i
-         * bc[i] sum of best (i.e. min) costs for level i
-         * fo_n[i] number of descendants at level i (including extended leaves)
-         * min_u[i] poly id of the leftmost descendant at level i
-         * max_u[i] poly id of the rightmost descendant at level i
-         */
+        // in_n[i] number of internal nodes at level i
+        // lf_n[i] number of leaf nodes at level i
+        // bc_in[i] sum of best (i.e. min) costs of internal nodes at level i
+        // bc[i] sum of best (i.e. min) costs for level i
+        // fo_n[i] number of descendants at level i (including extended leaves)
+        // min_u[i] poly id of the leftmost descendant at level i
+        // max_u[i] poly id of the rightmost descendant at level i
+
         std::vector<size_t> space_cost(DELTA_L_AMAP, -1);
         std::vector<size_t>
                 in_n(DELTA_L_AMAP, 0),
@@ -494,8 +493,8 @@ public:
                 }
                 // This is needed to check the bitvector size. u can be of uint128_t and it can be unsafe to assign it
                 // to space_bits_bitvector. The solution is to check if it is bigger than 2^32, in that case
-                // bitvector encoding must not be considered. Otherwise, we cast it to size_t and we
-                // assign it to space_bits_bitvector and we will check if it is the best encoding.
+                // bitvector encoding must not be considered. Otherwise, we cast it to size_t, we
+                // assign it to space_bits_bitvector, and we will check if it is the best encoding.
                 if (u <= code_type(1) << 63) {
                     space_bits_bitvector = (size_t) u;
                     space_bits_bitvector += (u / BLOCK_SIZE) * logu;
@@ -669,25 +668,25 @@ public:
             size_t max_l
     ) {
         char ch;
-        if constexpr(is_min)
+        if constexpr (is_min)
             ch = node->children.begin()->first;
         else
             ch = node->children.rbegin()->first;
         // +1 because 0 is the $
         code_type ch_id = code_type(ch - MIN_CHAR) + code_type(1);
         outvec[0] = ch_id;
-        if constexpr(is_min)
+        if constexpr (is_min)
             node = node->children.empty() ? nullptr : node->children.begin()->second;
         else
             node = node->children.empty() ? nullptr : node->children.rbegin()->second;
         TrieNode_lw *aux = node;
         bool end_of_world_found = false;
-        if constexpr(is_min) {
+        if constexpr (is_min) {
             end_of_world_found = aux->isEndOfWord;
         }
         for (size_t base_l = 1; base_l < max_l; base_l++) {
             if (aux != nullptr and !aux->children.empty() and !end_of_world_found) {
-                if constexpr(is_min) {
+                if constexpr (is_min) {
                     if (aux->isEndOfWord) {
                         end_of_world_found = true;
                         ch_id = OUR_DOLLAR_ID;
@@ -716,23 +715,23 @@ public:
     std::string extreme_string_l(TrieNode_lw *node, size_t l) {
         TrieNode_lw *aux = node;
         char ch;
-        if constexpr(is_leftmost)
+        if constexpr (is_leftmost)
             ch = aux->children.begin()->first;
         else
             ch = aux->children.rbegin()->first;
         std::string s;
         s += ch;
-        if constexpr(is_leftmost)
+        if constexpr (is_leftmost)
             aux = aux->children.empty() ? nullptr : aux->children.begin()->second;
         else
             aux = aux->children.empty() ? nullptr : aux->children.rbegin()->second;
         bool end_of_world_found = false;
-        if constexpr(is_leftmost) {
+        if constexpr (is_leftmost) {
             end_of_world_found = aux->isEndOfWord;
         }
         for (size_t base_l = 1; base_l < l; base_l++) {
             if (aux != nullptr and !aux->children.empty() and !end_of_world_found) {
-                if constexpr(is_leftmost) {
+                if constexpr (is_leftmost) {
                     if (aux->isEndOfWord) {
                         end_of_world_found = true;
                     } else {
@@ -808,6 +807,7 @@ public:
             isEndOfWord = false;
             has_just_one_descendant_leaf = false;
         }
+
         std::map<char, TrieNode_simple *> children;
 
         // isEndOfWord is true if the node

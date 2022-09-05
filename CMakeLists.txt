@@ -24,10 +24,15 @@ target_link_libraries(coco-trie_bench_small_alphabet sdsl succinct ${Boost_LIBRA
 #alphabets at most 95
 add_executable(coco-trie_bench_big_alphabet benchmark.cpp)
 target_link_libraries(coco-trie_bench_big_alphabet sdsl succinct ${Boost_LIBRARIES})
+# this line sets the maximum alphabet size. By defaults alphabet size < 26
 target_compile_definitions(coco-trie_bench_big_alphabet PRIVATE BIG_ALPHABET)
 
 add_executable(generate_no_suffixes generate_no_suffixes.cpp)
 target_link_libraries(generate_no_suffixes sdsl succinct ${Boost_LIBRARIES})
+
+add_executable(example example.cpp)
+target_link_libraries(example sdsl succinct ${Boost_LIBRARIES})
+target_compile_definitions(example PRIVATE BIG_ALPHABET)
 
 enable_testing()
 add_subdirectory(test)

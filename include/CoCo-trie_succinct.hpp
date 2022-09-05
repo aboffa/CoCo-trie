@@ -17,7 +17,7 @@
 #include <queue>
 #include "louds.hpp"
 
-template<uint8_t MIN_L, typename code_type, uint8_t MAX_L_THRS>
+template<uint8_t MIN_L = 1, typename code_type = uint128_t, uint8_t MAX_L_THRS = MAX_L_THRS>
 class CoCo_succinct {
 public:
     using rank1_type = sdsl::rank_support_v5<1>;
@@ -33,17 +33,12 @@ public:
 
     uint8_t log_sigma = log_universe(ALPHABET_SIZE);
 
-    CoCo_succinct(Trie_lw<MIN_L, code_type, MAX_L_THRS, 0> &uncompacted) {
-        topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
-        pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
-        size_t num_built_nodes = 0;
+    template<typename root_type>
+    void build_CoCo_from_uncompated_trie(root_type root) {
         succinct::bit_vector_builder internal_variable_tmp;
-        // create a queue of nodes
-        std::queue<typename Trie_lw<MIN_L, code_type, MAX_L_THRS>::TrieNode_lw *> q;
-        q.push(uncompacted.root);
-
-        num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
-
+        size_t num_built_nodes = 0;
+        std::queue<root_type> q;
+        q.push(root);
         while (!q.empty()) {
             typename Trie_lw<MIN_L, code_type, MAX_L_THRS>::TrieNode_lw *node = q.front();
             q.pop();
@@ -169,6 +164,32 @@ public:
         sdsl::util::bit_compress(*pointers_to_encoding);
         internal_variable = std::make_unique<succinct::bit_vector>(&internal_variable_tmp);
         assert(internal_variable->size() > 0);
+    }
+
+    CoCo_succinct(std::vector<std::string> &dataset) {
+        Trie_lw<> uncompacted;
+        // filling the uncompacted trie
+        for (int i = 0; i < dataset.size(); i++)
+            uncompacted.insert(dataset[i]);
+
+        // computing the best number of levels to collapse into the nodes
+        uncompacted.space_cost_all_nodes();
+        uncompacted.build_actual_CoCo_children();
+
+        topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
+        pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
+
+        num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
+
+        build_CoCo_from_uncompated_trie(uncompacted.root);
+    }
+
+    CoCo_succinct(Trie_lw<MIN_L, code_type, MAX_L_THRS, 0> &uncompacted) {
+        topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
+        pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
+
+        num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
+        build_CoCo_from_uncompated_trie(uncompacted.root);
     }
 
     // return a unique id for a string to_search of -1 if it does not exist
