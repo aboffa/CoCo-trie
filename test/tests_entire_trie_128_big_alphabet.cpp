@@ -36,8 +36,8 @@ TEST_CASE("Test CoCo_trie l fixed uint128_t", "") {
     for (auto j = 0; j < filenames.size(); ++j) {
         std::vector<std::string> dataset;
         datasetStats ds = load_data_from_file(dataset, filenames[j]);
-        MIN_CHAR = ds.min_char;
-        ALPHABET_SIZE = ds.chars.rbegin()->first - ds.chars.begin()->first + 2;
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
         REQUIRE(ALPHABET_SIZE < 127);
 
         // Construct trie
@@ -102,10 +102,10 @@ TEST_CASE("Test CoCo_trie l fixed uint128_t", "") {
                     REQUIRE(lu_res == -1);
                 }
                 trie.clear_space_cost();
-            }//end miss tests
+            }
         }
     }
-}//end test case
+}
 
 template<typename trie_t>
 void test_trie(trie_t &coco_trie, std::vector<std::string> dataset, const datasetStats &ds) {
@@ -143,9 +143,9 @@ TEST_CASE("Test CoCo_trie l<18 optimal uint128", "") {
 
         std::cout << "Filename: " << filenames[j] << std::endl;
 
-        MIN_CHAR = ds.min_char;
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
 
-        ALPHABET_SIZE = ds.chars.rbegin()->first - ds.chars.begin()->first + 2;
         REQUIRE(ALPHABET_SIZE < 127);
         //ds.print();
 
@@ -171,9 +171,9 @@ TEST_CASE("Test CoCo_trie l<18 optimal uint128 space relaxation", "") {
 
         std::cout << "Filename: " << filenames[j] << std::endl;
 
-        MIN_CHAR = ds.min_char;
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
 
-        ALPHABET_SIZE = ds.chars.rbegin()->first - ds.chars.begin()->first + 2;
         REQUIRE(ALPHABET_SIZE < 127);
 
         Trie_lw<1, uint128_t, MAX_L_THRS, 10> trie;
@@ -198,9 +198,9 @@ TEST_CASE("Test CoCo_succinct l<18 optimal uint128", "") {
 
         std::cout << "Filename: " << filenames[j] << std::endl;
 
-        MIN_CHAR = ds.min_char;
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
 
-        ALPHABET_SIZE = ds.chars.rbegin()->first - ds.chars.begin()->first + 2;
         REQUIRE(ALPHABET_SIZE < 127);
 
         Trie_lw<1, uint128_t, MAX_L_THRS> trie;
@@ -213,6 +213,34 @@ TEST_CASE("Test CoCo_succinct l<18 optimal uint128", "") {
 
         trie.build_actual_CoCo_children();
         CoCo_succinct<1, uint128_t, MAX_L_THRS> coco_trie(trie);
+
+        test_trie(coco_trie, dataset, ds);
+
+    }
+}
+
+TEST_CASE("Test CoCo_succinct l<18 optimal uint128 space relaxation", "") {
+    for (auto j = 0; j < filenames.size(); ++j) {
+        std::vector<std::string> dataset;
+        datasetStats ds = load_data_from_file(dataset, filenames[j]);
+
+        std::cout << "Filename: " << filenames[j] << std::endl;
+
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
+
+        REQUIRE(ALPHABET_SIZE < 127);
+
+        Trie_lw<1, uint128_t, MAX_L_THRS, 15> trie;
+        trie.set_filename(filenames[j]);
+        // Construct trie
+        for (auto i = 0; i < dataset.size(); i++)
+            trie.insert(dataset[i]);
+
+        trie.space_cost_all_nodes(0);
+
+        trie.build_actual_CoCo_children();
+        CoCo_succinct<1, uint128_t, MAX_L_THRS, 15> coco_trie(trie);
 
         test_trie(coco_trie, dataset, ds);
 

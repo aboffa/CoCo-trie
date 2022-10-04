@@ -34,6 +34,9 @@ make -j
 
 ## Run the example 🏃
 
+The `example.cpp` file shows how to index and compress a vector of strings with the CoCo-trie:
+
+
 ```c++
 int main() {
     std::vector<std::string> dataset = {"compressed", "data", "structure", "trie"};
@@ -45,14 +48,14 @@ int main() {
 
     CoCo_fast<> coco(dataset);
 
-    coco.size_in_bits(); // return number of bits
+    coco.size_in_bits(); // return number of bits used to store the dataset
 
     coco.look_up("compressed"); // returns id 1
     coco.look_up("data"); // returns id 2
     coco.look_up("structure"); // returns id 3
     coco.look_up("trie"); // returns id 4
 
-    coco.look_up("SPIRE"); // returns -1, the strings doesn't belong to the set
+    coco.look_up("SPIRE"); // returns -1, the string doesn't belong to the set
 
     return 0;
 }

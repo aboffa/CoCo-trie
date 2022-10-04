@@ -17,11 +17,13 @@
 #include <queue>
 #include "louds.hpp"
 
-template<uint8_t MIN_L = 1, typename code_type = uint128_t, uint8_t MAX_L_THRS = MAX_L_THRS>
+template<uint8_t MIN_L = 1, typename code_type = uint128_t, uint8_t MAX_L_THRS = MAX_L_THRS, uint8_t space_relaxation = 0>
 class CoCo_succinct {
 public:
     using rank1_type = sdsl::rank_support_v5<1>;
     using rank00_type = sdsl::rank_support_v5<0, 2>;
+    using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
+    using CoCo_fast_t = CoCo_fast<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
 
     std::unique_ptr<succinct::bit_vector> internal_variable;
 
@@ -40,7 +42,7 @@ public:
         std::queue<root_type> q;
         q.push(root);
         while (!q.empty()) {
-            typename Trie_lw<MIN_L, code_type, MAX_L_THRS>::TrieNode_lw *node = q.front();
+            typename utrie_t::TrieNode_lw *node = q.front();
             q.pop();
 
             if (node == nullptr) {
@@ -72,24 +74,24 @@ public:
                         bvb.append_bits((uint64_t) node->node_type_vec[node->l_idx], NUM_BIT_TYPE);
                         bvb.append_bits((uint64_t) node->isEndOfWord, 1);
                         if (is_remapped) {
-                            first_code = Trie_lw<MIN_L, code_type, MAX_L_THRS>::enc_real(child_string,
-                                                                                         node->l_idx,
-                                                                                         node->alphamaps[node->l_idx]);
+                            first_code = utrie_t::enc_real(child_string,
+                                                           node->l_idx,
+                                                           node->alphamaps[node->l_idx]);
                             bvb.append_bits(node->alphamaps[node->l_idx].bitmap, ALPHABET_SIZE);
                             bvb.append_bits(first_code,
                                             bits_first_code<MIN_L, code_type>(node->alphamaps[node->l_idx].rankmax(),
                                                                               node->l_idx));
                         } else {
-                            first_code = Trie_lw<MIN_L, code_type, MAX_L_THRS>::enc(child_string, node->l_idx);
+                            first_code = utrie_t::enc(child_string, node->l_idx);
                             bvb.append_bits(first_code, log_sigma * (node->l_idx + MIN_L));
                         }
                     } else {
                         if (nt != all_ones and nt != all_ones_amap) {
                             code_type new_code = 0;
                             if (is_remapped) {
-                                new_code = Trie_lw<MIN_L, code_type, MAX_L_THRS>::enc_real(child_string,
-                                                                                           node->l_idx,
-                                                                                           node->alphamaps[node->l_idx]);
+                                new_code = utrie_t::enc_real(child_string,
+                                                             node->l_idx,
+                                                             node->alphamaps[node->l_idx]);
                                 assert(new_code > first_code);
                                 // we use delta come with respect first_code
                                 new_code -= first_code;
@@ -98,7 +100,7 @@ public:
                                 assert(new_code <= node->u_vec_real[node->l_idx]);
 
                             } else {
-                                new_code = Trie_lw<MIN_L, code_type, MAX_L_THRS>::enc(child_string, node->l_idx);
+                                new_code = utrie_t::enc(child_string, node->l_idx);
                                 assert(new_code > first_code);
                                 // we use delta come with respect first_code
                                 new_code -= first_code;
@@ -113,30 +115,30 @@ public:
                 assert(std::is_sorted(codes.begin(), codes.end()));
                 switch (nt) {
                     case (elias_fano) : {
-                        CoCo_fast<MIN_L, code_type, MAX_L_THRS>::write_elias_fano(node->u_vec[node->l_idx], codes, bvb);
+                        CoCo_fast_t::write_elias_fano(node->u_vec[node->l_idx], codes, bvb);
                     }
                         break;
                     case (elias_fano_amap) : {
-                        CoCo_fast<MIN_L, code_type, MAX_L_THRS>::write_elias_fano(node->u_vec_real[node->l_idx], codes,
-                                                                                  bvb);
+                        CoCo_fast_t::write_elias_fano(node->u_vec_real[node->l_idx], codes,
+                                                      bvb);
                     }
                         break;
                     case (bitvector) : {
-                        CoCo_fast<MIN_L, code_type, MAX_L_THRS>::write_bitvector(node->u_vec[node->l_idx], codes, bvb);
+                        CoCo_fast_t::write_bitvector(node->u_vec[node->l_idx], codes, bvb);
                     }
                         break;
                     case (bitvector_amap) : {
-                        CoCo_fast<MIN_L, code_type, MAX_L_THRS>::write_bitvector(node->u_vec_real[node->l_idx], codes,
-                                                                                 bvb);
+                        CoCo_fast_t::write_bitvector(node->u_vec_real[node->l_idx], codes,
+                                                     bvb);
                     }
                         break;
                     case (packed) : {
-                        CoCo_fast<MIN_L, code_type, MAX_L_THRS>::write_packed(node->u_vec[node->l_idx], codes, bvb);
+                        CoCo_fast_t::write_packed(node->u_vec[node->l_idx], codes, bvb);
                     }
                         break;
                     case (packed_amap) : {
-                        CoCo_fast<MIN_L, code_type, MAX_L_THRS>::write_packed(node->u_vec_real[node->l_idx], codes,
-                                                                              bvb);
+                        CoCo_fast_t::write_packed(node->u_vec_real[node->l_idx], codes,
+                                                  bvb);
                     }
                         break;
                     case (all_ones) :
@@ -167,7 +169,7 @@ public:
     }
 
     CoCo_succinct(std::vector<std::string> &dataset) {
-        Trie_lw<> uncompacted;
+        utrie_t uncompacted;
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
             uncompacted.insert(dataset[i]);
@@ -184,7 +186,7 @@ public:
         build_CoCo_from_uncompated_trie(uncompacted.root);
     }
 
-    CoCo_succinct(Trie_lw<MIN_L, code_type, MAX_L_THRS, 0> &uncompacted) {
+    CoCo_succinct(utrie_t &uncompacted) {
         topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
         pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
 
@@ -194,10 +196,10 @@ public:
 
     // return a unique id for a string to_search of -1 if it does not exist
     size_t look_up(const std::string &to_search) const {
-        size_t internal_rank = 0; //number of internal nodes before bv_index (initially refers to the root)
-        size_t node_rank = 0; //number of nodes before  bv_index (initially refers to the root)
-        size_t bv_index = 2; //position in the bv (initially refers to the root)
-        size_t scanned_chars = 0; //acc. of l values.
+        size_t internal_rank = 0; // number of internal nodes before bv_index (initially refers to the root)
+        size_t node_rank = 0; // number of nodes before  bv_index (initially refers to the root)
+        size_t bv_index = 2; // position in the bv (initially refers to the root)
+        size_t scanned_chars = 0; // accumulator of l values.
         std::string_view substr;
         size_t n = num_child_root;
         std::string_view to_search_view(to_search);
@@ -242,7 +244,7 @@ public:
                 it.move(it.position());
                 switch (nt) {
                     case (elias_fano) : {
-                        child_to_continue = CoCo_fast<MIN_L, code_type, MAX_L_THRS>::read_and_search_elias_fano(
+                        child_to_continue = CoCo_fast_t::read_and_search_elias_fano(
                                 *internal_variable, it, n - 1, to_search_code);
                     }
                         break;
@@ -250,7 +252,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast<MIN_L, code_type, MAX_L_THRS>::read_and_search_bitvector(
+                        child_to_continue = CoCo_fast_t::read_and_search_bitvector(
                                 *internal_variable, it, to_search_code,
                                 next_pointer - it.position());
                     }
@@ -260,7 +262,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast<MIN_L, code_type, MAX_L_THRS>::read_and_search_packed(
+                        child_to_continue = CoCo_fast_t::read_and_search_packed(
                                 *internal_variable, it, n - 1, to_search_code,
                                 next_pointer - it.position());
                     }
@@ -270,7 +272,7 @@ public:
                     }
                         break;
                     case (elias_fano_amap) : {
-                        child_to_continue = CoCo_fast<MIN_L, code_type, MAX_L_THRS>::read_and_search_elias_fano(
+                        child_to_continue = CoCo_fast_t::read_and_search_elias_fano(
                                 *internal_variable, it, n - 1,
                                 to_search_code);
                     }
@@ -279,7 +281,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast<MIN_L, code_type, MAX_L_THRS>::read_and_search_bitvector(
+                        child_to_continue = CoCo_fast_t::read_and_search_bitvector(
                                 *internal_variable, it, to_search_code,
                                 next_pointer - it.position());
                     }
@@ -288,7 +290,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast<MIN_L, code_type, MAX_L_THRS>::read_and_search_packed(
+                        child_to_continue = CoCo_fast_t::read_and_search_packed(
                                 *internal_variable, it, n - 1, to_search_code,
                                 next_pointer - it.position());
                     }

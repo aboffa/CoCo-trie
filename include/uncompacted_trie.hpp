@@ -680,15 +680,15 @@ public:
         else
             node = node->children.empty() ? nullptr : node->children.rbegin()->second;
         TrieNode_lw *aux = node;
-        bool end_of_world_found = false;
+        bool end_of_word_found = false;
         if constexpr (is_min) {
-            end_of_world_found = aux->isEndOfWord;
+            end_of_word_found = aux->isEndOfWord;
         }
         for (size_t base_l = 1; base_l < max_l; base_l++) {
-            if (aux != nullptr and !aux->children.empty() and !end_of_world_found) {
+            if (aux != nullptr and !aux->children.empty() and !end_of_word_found) {
                 if constexpr (is_min) {
                     if (aux->isEndOfWord) {
-                        end_of_world_found = true;
+                        end_of_word_found = true;
                         ch_id = OUR_DOLLAR_ID;
                     } else {
                         ch = aux->children.begin()->first;
@@ -725,15 +725,15 @@ public:
             aux = aux->children.empty() ? nullptr : aux->children.begin()->second;
         else
             aux = aux->children.empty() ? nullptr : aux->children.rbegin()->second;
-        bool end_of_world_found = false;
+        bool end_of_word_found = false;
         if constexpr (is_leftmost) {
-            end_of_world_found = aux->isEndOfWord;
+            end_of_word_found = aux->isEndOfWord;
         }
         for (size_t base_l = 1; base_l < l; base_l++) {
-            if (aux != nullptr and !aux->children.empty() and !end_of_world_found) {
+            if (aux != nullptr and !aux->children.empty() and !end_of_word_found) {
                 if constexpr (is_leftmost) {
                     if (aux->isEndOfWord) {
-                        end_of_world_found = true;
+                        end_of_word_found = true;
                     } else {
                         ch = aux->children.begin()->first;
                         aux = aux->children.empty() ? nullptr : aux->children.begin()->second;

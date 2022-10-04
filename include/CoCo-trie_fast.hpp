@@ -23,11 +23,11 @@
 struct fixed_node {
     uint8_t l: NUM_BIT_FOR_L;
     uint8_t type: NUM_BIT_TYPE;
-    uint8_t end_of_world: 1;
+    uint8_t end_of_word: 1;
     uint64_t pointer: NUM_BIT_POINTER;
 
-    fixed_node(uint8_t _l, uint8_t _type, uint8_t _end_of_world, uint64_t _pointer) : l(_l), type(_type),
-                                                                                      end_of_world(_end_of_world),
+    fixed_node(uint8_t _l, uint8_t _type, uint8_t _end_of_word, uint64_t _pointer) : l(_l), type(_type),
+                                                                                      end_of_word(_end_of_word),
                                                                                       pointer(_pointer) {};
 };
 
@@ -38,6 +38,7 @@ class CoCo_fast {
 public:
     using rank1_type = sdsl::rank_support_v<1>;
     using rank00_type = sdsl::rank_support_v<0, 2>;
+    using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
 
     std::unique_ptr<succinct::bit_vector> internal_variable;
 
@@ -165,7 +166,7 @@ public:
         std::queue<root_type> q;
         q.push(root);
         while (!q.empty()) {
-            typename Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::TrieNode_lw *node = q.front();
+            typename utrie_t::TrieNode_lw *node = q.front();
             q.pop();
 
             if (node == nullptr) {
@@ -192,17 +193,14 @@ public:
                     if (is_first) {
                         is_first = false;
                         if (is_remapped) {
-                            first_code = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::enc_real(child_string,
-                                                                                                           node->l_idx,
-                                                                                                           node->alphamaps[node->l_idx]);
+                            first_code = utrie_t::enc_real(child_string, node->l_idx, node->alphamaps[node->l_idx]);
                             bvb.append_bits(node->alphamaps[node->l_idx].bitmap, ALPHABET_SIZE);
                             size_t bfc = bits_first_code<MIN_L, code_type>(
                                     node->alphamaps[node->l_idx].rankmax(), node->l_idx);
                             bvb.append_bits(first_code, bfc);
                             assert(bvb.size() == bfc + ALPHABET_SIZE);
                         } else {
-                            first_code = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::enc(child_string,
-                                                                                                      node->l_idx);
+                            first_code = utrie_t::enc(child_string, node->l_idx);
                             bvb.append_bits(first_code, log_sigma * (node->l_idx + MIN_L));
                             assert(bvb.size() == log_sigma * (node->l_idx + MIN_L));
                         }
@@ -211,7 +209,7 @@ public:
                             codes.reserve(node->actual_CoCo_children.size());
                             code_type new_code = 0;
                             if (is_remapped) {
-                                new_code = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::enc_real(
+                                new_code = utrie_t::enc_real(
                                         child_string,
                                         node->l_idx,
                                         node->alphamaps[node->l_idx]);
@@ -223,8 +221,7 @@ public:
                                 assert(new_code <= node->u_vec_real[node->l_idx]);
 
                             } else {
-                                new_code = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::enc(child_string,
-                                                                                                        node->l_idx);
+                                new_code = utrie_t::enc(child_string, node->l_idx);
                                 assert(new_code > first_code);
                                 new_code -= first_code;
                                 new_code--;
@@ -289,7 +286,7 @@ public:
     }
 
     CoCo_fast(std::vector<std::string> &dataset) {
-        Trie_lw<> uncompacted;
+        utrie_t uncompacted;
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
             uncompacted.insert(dataset[i]);
@@ -306,7 +303,7 @@ public:
         build_CoCo_from_uncompated_trie(uncompacted.root);
     }
 
-    CoCo_fast(Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation> &uncompacted) {
+    CoCo_fast(utrie_t &uncompacted) {
         topology = std::make_unique<louds<rank1_type, rank00_type>>(uncompacted.global_number_nodes_CoCo);
         internal_fixed.reserve(uncompacted.global_number_nodes_CoCo);
 
@@ -334,7 +331,7 @@ public:
             size_t l = fn.l;
             assert(n != 0);
             if (to_search.size() == scanned_chars) {
-                return fn.end_of_world ? topology->node_rank(bv_index) : -1;
+                return fn.end_of_word ? topology->node_rank(bv_index) : -1;
             }
             const bool is_remapped = (nt >= elias_fano_amap);
             code_type first_code = 0;
@@ -350,10 +347,10 @@ public:
                 }
                 size_t bits_first_code_local_as = bits_first_code<MIN_L, code_type>(am.rankmax(), l);
                 first_code = it.take128(bits_first_code_local_as);
-                to_search_code = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::enc_real(substr, l, am);
+                to_search_code = utrie_t::enc_real(substr, l, am);
             } else { // no remap
                 first_code = it.take128(log_sigma * (l + MIN_L));
-                to_search_code = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>::enc(substr, l);
+                to_search_code = utrie_t::enc(substr, l);
             }
             assert(first_code != code_type(0));
             if (to_search_code < first_code) {
