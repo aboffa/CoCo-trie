@@ -13,13 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+
+
 #include <iostream>
 #include <chrono>
 #include <random>
 
 #include "uncompacted_trie.hpp"
 #include "utils.hpp"
-#include "CoCo-trie_v1.hpp"
 #include "CoCo-trie_v2.hpp"
 
 typedef unsigned __int128 uint128_t;

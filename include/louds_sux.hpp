@@ -1,3 +1,20 @@
+// This file is part of CoCo-trie <https://github.com/aboffa/CoCo-trie>.
+// Copyright (c) 2022 Antonio Boffa.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, version 3.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
+
 #include <sdsl/bit_vectors.hpp>
 #include <sdsl/util.hpp>
 #include <sux/bits/SimpleSelectZero.hpp>
@@ -41,8 +58,7 @@ struct louds_sux {
         rs00 = rank_support00(&bv);
         if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZero<>>)
             ss0 = select0_type(bv.data(), bv.size(), 2);
-        else
-        if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZeroHalf<>>)
+        else if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZeroHalf<>>)
             ss0 = select0_type(bv.data(), bv.size());
         else
             ss0 = select0_type(&bv);

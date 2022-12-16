@@ -89,6 +89,9 @@ const uint8_t NUM_BIT_FOR_L = 6;
 
 const size_t MAX_L_THRS_EF = __MAX_L_THRS_EF;
 const size_t MAX_L_THRS = __MAX_L_THRS;
+
+// Maximum ratio u/n to enable Elias-Fano encoding
+// A higher value would cause the encoding to be extremely slow
 const size_t MAX_U_DIV_N = 1710000;
 
 const uint64_t BASE_COST = 0;
@@ -96,6 +99,11 @@ const uint64_t BASE_COST = 0;
 const size_t BLOCK_SIZE = 8960;
 
 static_assert((NUM_BIT_FOR_L + NUM_BIT_POINTER + NUM_BIT_TYPE + 1) % CHAR_BIT == 0); // check if byte-aligned
+
+// To test just 50% set:
+//const size_t start_q_perc = 0;
+//const size_t end_q_perc = 50;
+//const size_t step_q_perc = 101;
 
 const size_t start_q_perc = 0;
 const size_t end_q_perc = 101;

@@ -85,8 +85,9 @@ public:
                                                            node->l_idx,
                                                            node->alphamaps[node->l_idx]);
                             bvb.append_bits(node->alphamaps[node->l_idx].bitmap, ALPHABET_SIZE);
-                            size_t bit_first_code_val = bits_first_code<MIN_L, code_type>(node->alphamaps[node->l_idx].rankmax(),
-                                                                                          node->l_idx);
+                            size_t bit_first_code_val = bits_first_code<MIN_L, code_type>(
+                                    node->alphamaps[node->l_idx].rankmax(),
+                                    node->l_idx);
                             bvb.append_bits(first_code, bit_first_code_val);
                         } else {
                             first_code = utrie_t::enc(child_string, node->l_idx);
@@ -129,7 +130,7 @@ public:
                     }
                     case (elias_fano_amap) : {
                         CoCo_v1_t::write_elias_fano(node->u_vec_real[node->l_idx], codes,
-                                                      bvb);
+                                                    bvb);
                         break;
                     }
                     case (bitvector) : {
@@ -138,7 +139,7 @@ public:
                     }
                     case (bitvector_amap) : {
                         CoCo_v1_t::write_bitvector(node->u_vec_real[node->l_idx], codes,
-                                                     bvb);
+                                                   bvb);
                         break;
                     }
                     case (packed) : {
@@ -147,7 +148,7 @@ public:
                     }
                     case (packed_amap) : {
                         CoCo_v1_t::write_packed(node->u_vec_real[node->l_idx], codes,
-                                                  bvb);
+                                                bvb);
                         break;
                     }
                     case (all_ones) : {
@@ -187,7 +188,8 @@ public:
         uncompacted.space_cost_all_nodes(l_fixed);
         uncompacted.build_actual_CoCo_children();
 
-        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(uncompacted.global_number_nodes_CoCo);
+        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(
+                uncompacted.global_number_nodes_CoCo);
         pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
@@ -197,7 +199,8 @@ public:
     }
 
     CoCo_v2(utrie_t &uncompacted) {
-        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(uncompacted.global_number_nodes_CoCo);
+        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(
+                uncompacted.global_number_nodes_CoCo);
         pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
@@ -257,7 +260,7 @@ public:
                 it.move(it.position());
                 switch (nt) {
                     case (elias_fano) : {
-                        child_to_continue = CoCo_fast_t::read_and_search_elias_fano(
+                        child_to_continue = CoCo_v1_t::read_and_search_elias_fano(
                                 *internal_variable, it, n - 1, to_search_code);
                         break;
                     }
@@ -265,7 +268,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast_t::read_and_search_bitvector(
+                        child_to_continue = CoCo_v1_t::read_and_search_bitvector(
                                 *internal_variable, it, to_search_code,
                                 next_pointer - it.position());
                         break;
@@ -275,7 +278,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast_t::read_and_search_packed(
+                        child_to_continue = CoCo_v1_t::read_and_search_packed(
                                 *internal_variable, it, n - 1, to_search_code,
                                 next_pointer - it.position());
                         break;
@@ -285,7 +288,7 @@ public:
                         break;
                     }
                     case (elias_fano_amap) : {
-                        child_to_continue = CoCo_fast_t::read_and_search_elias_fano(
+                        child_to_continue = CoCo_v1_t::read_and_search_elias_fano(
                                 *internal_variable, it, n - 1,
                                 to_search_code);
                         break;
@@ -294,7 +297,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast_t::read_and_search_bitvector(
+                        child_to_continue = CoCo_v1_t::read_and_search_bitvector(
                                 *internal_variable, it, to_search_code,
                                 next_pointer - it.position());
                         break;
@@ -303,7 +306,7 @@ public:
                         size_t next_pointer = (internal_rank == pointers_to_encoding->size() - 1)
                                               ? internal_variable->size() :
                                               (*pointers_to_encoding)[internal_rank + 1];
-                        child_to_continue = CoCo_fast_t::read_and_search_packed(
+                        child_to_continue = CoCo_v1_t::read_and_search_packed(
                                 *internal_variable, it, n - 1, to_search_code,
                                 next_pointer - it.position());
                         break;

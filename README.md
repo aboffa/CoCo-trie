@@ -46,7 +46,7 @@ int main() {
     MIN_CHAR = ds.get_min_char();
     ALPHABET_SIZE = ds.get_alphabet_size();
 
-    CoCo_v1<> coco(dataset);
+    CoCo_v2<> coco(dataset);
 
     coco.size_in_bits(); // return number of bits used to store the dataset
 

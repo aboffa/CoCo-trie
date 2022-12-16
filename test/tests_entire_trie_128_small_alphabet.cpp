@@ -22,7 +22,6 @@
 
 #include "uncompacted_trie.hpp"
 #include "utils.hpp"
-#include "CoCo-trie_v1.hpp"
 #include "CoCo-trie_v2.hpp"
 #include "test_trie.hpp"
 
