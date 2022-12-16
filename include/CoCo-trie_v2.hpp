@@ -16,6 +16,7 @@
 
 #include <queue>
 #include "louds_sux.hpp"
+#include "CoCo-trie_v1.hpp"
 
 template<uint8_t MIN_L = 1,
         typename code_type = uint128_t,
@@ -27,7 +28,7 @@ template<uint8_t MIN_L = 1,
 class CoCo_v2 {
 public:
     using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
-    using CoCo_fast_t = CoCo_v1<MIN_L, code_type, MAX_L_THRS, space_relaxation, rank1_type, rank00_type, select0_type>;
+    using CoCo_v1_t = CoCo_v1<MIN_L, code_type, MAX_L_THRS, space_relaxation, rank1_type, rank00_type, select0_type>;
 
     std::unique_ptr<succinct::bit_vector> internal_variable;
 
@@ -123,29 +124,29 @@ public:
                 size_t bvb_prev_size = bvb.size();
                 switch (nt) {
                     case (elias_fano) : {
-                        CoCo_fast_t::write_elias_fano(node->u_vec[node->l_idx], codes, bvb);
+                        CoCo_v1_t::write_elias_fano(node->u_vec[node->l_idx], codes, bvb);
                         break;
                     }
                     case (elias_fano_amap) : {
-                        CoCo_fast_t::write_elias_fano(node->u_vec_real[node->l_idx], codes,
+                        CoCo_v1_t::write_elias_fano(node->u_vec_real[node->l_idx], codes,
                                                       bvb);
                         break;
                     }
                     case (bitvector) : {
-                        CoCo_fast_t::write_bitvector(node->u_vec[node->l_idx], codes, bvb);
+                        CoCo_v1_t::write_bitvector(node->u_vec[node->l_idx], codes, bvb);
                         break;
                     }
                     case (bitvector_amap) : {
-                        CoCo_fast_t::write_bitvector(node->u_vec_real[node->l_idx], codes,
+                        CoCo_v1_t::write_bitvector(node->u_vec_real[node->l_idx], codes,
                                                      bvb);
                         break;
                     }
                     case (packed) : {
-                        CoCo_fast_t::write_packed(node->u_vec[node->l_idx], codes, bvb);
+                        CoCo_v1_t::write_packed(node->u_vec[node->l_idx], codes, bvb);
                         break;
                     }
                     case (packed_amap) : {
-                        CoCo_fast_t::write_packed(node->u_vec_real[node->l_idx], codes,
+                        CoCo_v1_t::write_packed(node->u_vec_real[node->l_idx], codes,
                                                   bvb);
                         break;
                     }
