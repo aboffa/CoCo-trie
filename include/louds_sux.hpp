@@ -1,7 +1,7 @@
 #include <sdsl/bit_vectors.hpp>
 #include <sdsl/util.hpp>
-#include "sux/bits/SimpleSelectZero.hpp"
-#include "sux/bits/SimpleSelectZeroHalf.hpp"
+#include <sux/bits/SimpleSelectZero.hpp>
+#include <sux/bits/SimpleSelectZeroHalf.hpp>
 
 #pragma once
 
@@ -81,30 +81,12 @@ struct louds_sux {
         return to_return * CHAR_BIT;
     }
 
-//    inline size_t num_nodes() {
-//        return (bv.size() - 1) / 2;
-//    }
-//
-//    inline size_t num_bits_bitvector() {
-//        return bv.size();
-//    }
-
-    // takes position in the bv returns number of children
-//    size_t num_child(size_t v) const {
-//        return sszh.selectZero(v - rs1.rank(v)) - v;
-//    }
-
     // takes position in the bv returns number of children
     size_t num_child(size_t v) const {
         size_t next0 = nextZero(v);
         assert(next0 >= v);
         return next0 - v;
     }
-
-//    // takes position in the bv returns number of children
-//    size_t num_child(size_t v, size_t rank_v) {
-//        return sszh.selectZero(v - rank_v + 1) - v;
-//    }
 
     // takes position in the bv and an integer > 0 and returns the index of the nth child
     size_t n_th_child_rank(size_t v, size_t n) {
