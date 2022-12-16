@@ -20,7 +20,7 @@
 
 #include "uncompacted_trie.hpp"
 #include "utils.hpp"
-#include "CoCo-trie_fast.hpp"
+#include "CoCo-trie_v1.hpp"
 #include "synthetic.hpp"
 #include "array.hpp"
 
@@ -67,14 +67,13 @@ TEST_CASE("Test write_elias_fano and read_and_search_elias_fano uint128_t cluste
     const size_t n = 100000;
     std::vector<uint128_t> dataset(get_clustered(n, u));
     succinct::bit_vector_builder bvb;
-    CoCo_fast<1, uint128_t, 18>::write_elias_fano(u, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_elias_fano(u, dataset, bvb);
 
     succinct::bit_vector bv(&bvb);
     array<uint128_t> arr(dataset);
     for (uint128_t i = 0; i < dataset.back() + 1; i += u / n) {
         succinct::bit_vector::enumerator it(bv, 0);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_elias_fano(bv, it, n, i);
-        // if i is in the dataset
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_elias_fano(bv, it, n, i);
         if (i == arr[arr.rank(i)]) {
             REQUIRE((res - 2) == arr.rank(i));
         } else {
@@ -89,14 +88,13 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128 clustered u < 2^
     std::vector<uint128_t> dataset(get_clustered(n, u));
     succinct::bit_vector_builder bvb;
     bvb.zero_extend(10);
-    CoCo_fast<1, uint128_t, 18>::write_packed(u, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_packed(u, dataset, bvb);
 
     succinct::bit_vector bv(&bvb);
     array<uint128_t> arr(dataset);
     for (uint128_t i = 0; i < dataset.back() + 1; i += 10) {
         succinct::bit_vector::enumerator it(bv, 10);
-        // if i is in the dataset
-        auto res_value = CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
+        auto res_value = CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
         if (i == arr[arr.rank(i)]) {
             REQUIRE(arr.rank(i) == (res_value - 2));
         } else {
@@ -111,14 +109,13 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128 clustered u > 2^
     std::vector<uint128_t> dataset(get_clustered(n, u));
     succinct::bit_vector_builder bvb;
     bvb.zero_extend(10);
-    CoCo_fast<1, uint128_t, 18>::write_packed(u, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_packed(u, dataset, bvb);
 
     succinct::bit_vector bv(&bvb);
     array<uint128_t> arr(dataset);
     for (uint128_t i = 0; i < dataset.back() + 1; i += (u >> 23)) {
         succinct::bit_vector::enumerator it(bv, 10);
-        // if i is in the dataset
-        auto res_value = CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
+        auto res_value = CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
         if (i == arr[arr.rank(i)]) {
             REQUIRE(arr.rank(i) == (res_value - 2));
         } else {
@@ -127,7 +124,7 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128 clustered u > 2^
     }
     for (uint128_t i = dataset.back() + 1; i <= u; i += (u >> 23)) {
         succinct::bit_vector::enumerator it(bv, 10);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
         REQUIRE(res == -1); //miss
     }
 }
@@ -138,14 +135,13 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128 uniform u < 2^64
     std::vector<uint128_t> dataset(get_uniform(n, u));
     succinct::bit_vector_builder bvb;
     bvb.zero_extend(10);
-    CoCo_fast<1, uint128_t, 18>::write_packed(u, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_packed(u, dataset, bvb);
 
     succinct::bit_vector bv(&bvb);
     array<uint128_t> arr(dataset);
     for (uint128_t i = 0; i < dataset.back() + 1; i += 2) {
         succinct::bit_vector::enumerator it(bv, 10);
-        // if i is in the dataset
-        auto res_value = CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
+        auto res_value = CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it, n, i, n * log_universe(u));
         if (i == arr[arr.rank(i)]) {
             REQUIRE(arr.rank(i) == (res_value - 2));
         } else {
@@ -155,7 +151,7 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128 uniform u < 2^64
 
     for (uint128_t val = dataset.back() + 1; val <= u; val += 2) {
         succinct::bit_vector::enumerator it(bv, 10);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it, n, val, n * log_universe(u));
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it, n, val, n * log_universe(u));
         REQUIRE(res == -1); //miss
     }
 }
@@ -166,18 +162,17 @@ TEST_CASE("Test write_bitvector and read_and_search_bitvector uint128 uniform ",
     const size_t n = 1 << 15;
     std::vector<uint128_t> dataset(get_uniform(n, u));
     succinct::bit_vector_builder bvb;
-    CoCo_fast<1, uint128_t, 18>::write_bitvector(u, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_bitvector(u, dataset, bvb);
 
     succinct::bit_vector bv(&bvb);
     array<uint128_t> arr(dataset);
     for (uint128_t i = 0; i < dataset.back() + 1; i += 2) {
         succinct::bit_vector::enumerator it(bv, 0);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u);
-        // if i is in the dataset
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u);
         if (i == arr[arr.rank(i)]) {
             REQUIRE(arr.rank(i) == (res - 2));
         } else {
-            REQUIRE(-1 == CoCo_fast<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u));
+            REQUIRE(-1 == CoCo_v1<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u));
         }
     }
 }
@@ -190,14 +185,14 @@ TEST_CASE("Test bitvector uint128 uniform", "") {
 
     //write
     succinct::bit_vector_builder bvb;
-    CoCo_fast<1, uint128_t, 18>::write_bitvector(u_128, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_bitvector(u_128, dataset, bvb);
     succinct::bit_vector bv(&bvb);
 
     //test
     size_t rank = 0;
     for (uint128_t i = 0; i < dataset.back(); ++i) {
         succinct::bit_vector::enumerator it(bv, 0);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u_128);
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u_128);
         if (i == dataset[rank]) {
             REQUIRE((res - 2) == rank); //hit
             rank++;
@@ -215,14 +210,14 @@ TEST_CASE("Test bitvector uint128 clustered", "") {
 
     //write
     succinct::bit_vector_builder bvb;
-    CoCo_fast<1, uint128_t, 18>::write_bitvector(u_128, dataset, bvb);
+    CoCo_v1<1, uint128_t, 18>::write_bitvector(u_128, dataset, bvb);
     succinct::bit_vector bv(&bvb);
 
     //test
     size_t rank = 0;
     for (uint128_t i = 0; i < dataset.back(); ++i) {
         succinct::bit_vector::enumerator it(bv, 0);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u_128);
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_bitvector(bv, it, i, u_128);
         if (i == dataset[rank]) {
             REQUIRE((res - 2) == rank); //hit
             rank++;
@@ -232,7 +227,7 @@ TEST_CASE("Test bitvector uint128 clustered", "") {
     }
     for (uint128_t val = dataset.back() + 1; val <= u_128; ++val) {
         succinct::bit_vector::enumerator it(bv, 0);
-        auto res = CoCo_fast<1, uint128_t, 18>::read_and_search_bitvector(bv, it, val, u_128);
+        auto res = CoCo_v1<1, uint128_t, 18>::read_and_search_bitvector(bv, it, val, u_128);
         REQUIRE(res == -1); //miss
     }
 }
@@ -248,7 +243,7 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128_t [mixed gamma_n
         ds2i::write_gamma_nonzero(bvb, 42 * i);
         bvb.append_bits(uint128_t(42 * i), 80);
         bvb.append_bits(uint64_t(42 * i), 45);
-        CoCo_fast<1, uint128_t, 18>::write_packed(u, dataset, bvb);
+        CoCo_v1<1, uint128_t, 18>::write_packed(u, dataset, bvb);
     }
 
     succinct::bit_vector bv(&bvb);
@@ -259,12 +254,12 @@ TEST_CASE("Test write_packed and read_and_search_packed uint128_t [mixed gamma_n
         REQUIRE(it.take128(45) == uint64_t(42 * i));
         {
             succinct::bit_vector::enumerator it_tmp(bv, it.position());
-            REQUIRE(CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it_tmp, 3, 2, 183) == 3);
+            REQUIRE(CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it_tmp, 3, 2, 183) == 3);
         }
         {
             succinct::bit_vector::enumerator it_tmp(bv, it.position());
-            REQUIRE(CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it_tmp, 3, 3, 183) == 4);
+            REQUIRE(CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it_tmp, 3, 3, 183) == 4);
         }
-        REQUIRE(CoCo_fast<1, uint128_t, 18>::read_and_search_packed(bv, it, 3, 5, 183) == -1);
+        REQUIRE(CoCo_v1<1, uint128_t, 18>::read_and_search_packed(bv, it, 3, 5, 183) == -1);
     }
 }

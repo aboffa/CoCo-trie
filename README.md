@@ -8,15 +8,15 @@
 
 ## What is it? 📣
 
-A data-aware trie shaped data structure for indexing and compressing a set of strings. It is designed and implemented by the [A<sup>3</sup> lab](http://acube.di.unipi.it/). 
+A data-aware trie-shaped data structure for indexing and compressing a set of strings. It is designed and implemented by the [A<sup>3</sup> lab](http://acube.di.unipi.it/). 
 
 CoCo-trie compresses and collapses subtrees in a principled and effective  way.
 
 It hinges upon a data-aware optimisation scheme that selects the best subtries to collapse based on a pool of succinct encoding schemes in order to minimise the overall space occupancy.
 
-An introduction to string dictionary, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the paper:
+An introduction to string dictionary, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the [paper](https://link.springer.com/chapter/10.1007/978-3-031-20643-6_17):
 
->  A. Boffa, P. Ferragina, F. Tosoni, and G. Vinciguerra, “Compressed string dictionaries via data-aware subtrie compaction” SPIRE 2022.
+>  Boffa, A., Ferragina, P., Tosoni, F., Vinciguerra, G. (2022). Compressed String Dictionaries via Data-Aware Subtrie Compaction. In: Arroyuelo, D., Poblete, B. (eds) String Processing and Information Retrieval. SPIRE 2022. Lecture Notes in Computer Science, vol 13617. Springer, Cham. https://doi.org/10.1007/978-3-031-20643-6_17
 
 
 ## Build the project 🔧
@@ -46,7 +46,7 @@ int main() {
     MIN_CHAR = ds.get_min_char();
     ALPHABET_SIZE = ds.get_alphabet_size();
 
-    CoCo_fast<> coco(dataset);
+    CoCo_v1<> coco(dataset);
 
     coco.size_in_bits(); // return number of bits used to store the dataset
 
@@ -78,9 +78,9 @@ Bigger datasets are available here:
 - https://www.tpc.org/tpcds/
 - http://pizzachili.dcc.uchile.cl/texts/dna/
 
-To preprocess the dataset and get the shortest prefix of every string that distinguishes it from the other strings run `build/generate_no_suffixes <filename>`.
+To preprocess the dataset and get the shortest prefix of every string that distinguishes it from the other strings run `script/preprocess_dataset.py`.
 
-To get 12-mers from `dna` dataset execute the code in the script `extract_k_mers.py`. 
+To get 12-mers from `dna` dataset execute the code in the script `script/extract_k_mers.py`. 
 
 
 ## Run the tests 🛫
@@ -101,9 +101,17 @@ This project is released for academic purposes under the terms of the GNU Genera
 Please, cite the paper:
 
 ```tex
-@inproceedings{Boffa:2022spire,
-author = {Boffa, Antonio and Ferragina, Paolo and Tosoni, Francesco and Vinciguerra, Giorgio},
-booktitle = {Proceedings of the 29th International Symposium on String Processing and Information Retrieval (SPIRE)},
-title = {Compressed string dictionaries via data-aware subtrie compaction},
-year = {2022}}
+@InProceedings{Boffa2022spire,
+    author="Boffa, Antonio and Ferragina, Paolo and Tosoni, Francesco and Vinciguerra, Giorgio",
+    editor="Arroyuelo, Diego
+    and Poblete, Barbara",
+    title="Compressed String Dictionaries via Data-Aware Subtrie Compaction",
+    booktitle="String Processing and Information Retrieval",
+    year="2022",
+    publisher="Springer International Publishing",
+    address="Cham",
+    pages="233--249",
+    abstract="String dictionaries are a core component of a plethora of applications, so it is not surprising that they have been widely and deeply investigated in the literature since the introduction of tries in the '60s.",
+    isbn="978-3-031-20643-6"
+}
 ```

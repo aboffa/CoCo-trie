@@ -32,6 +32,7 @@
 #include <random>
 #include <vector>
 #include <chrono>
+#include <iomanip>
 
 #include "synthetic.hpp"
 
@@ -65,17 +66,19 @@ enum node_type {
 
 // default values
 char MIN_CHAR = 'a';
-// because we are using LOUDS (constant time rank/select ds)
+size_t ALPHABET_SIZE = 96;
+
+// because we are using LOUDS + constant time rank/select ds
 // if num nodes = n, space used by the sdsl::implementaion of LOUDS is bounded by
 // using sdsl::rank_support_v<1>
-// 2n + 1 + (0.50 (0.25 * 2) for rank1 + 0.50 for rank00, + 0.4 for select1 + 0.4 for select0)n = 3.8n + 1.
-// experimentally seem to be bounded by 3.5
+// 2n + 1 + (0.50 (0.25 * 2) for rank1 + 0.50 for rank00, + 0.2 for select0)n = 3.2n + 1.
+// experimentally seem to be bounded by 3.1
 //
 // instead using sdsl::rank_support_v5<1>
-// 2n + 1 + (0.13 (0.0625 * 2) for rank1 + 0.13 for rank00, + 0.4 for select1 + 0.4 for select0)n = 3.06n + 1.
-// experimentally seem to be bounded by 2.7
+// 2n + 1 + (0.13 (0.0625 * 2) for rank1 + 0.13 for rank00, + 0.2 for select0) n = 2.39n + 1.
+// experimentally seem to be bounded by 2.5
 bool is_rank_support_v_or_v5 = true;
-float multiplier_for_topology = (is_rank_support_v_or_v5) ? 3.5 : 2.75;
+float multiplier_for_topology = (is_rank_support_v_or_v5) ? 3.2 : 2.39;
 
 const uint8_t NUM_BIT_TYPE = 3;
 const uint8_t NUM_BIT_POINTER = 38;
@@ -84,14 +87,13 @@ const uint8_t NUM_BIT_POINTER = 38;
 const size_t MAX_L_THRS_amap = 63;
 const uint8_t NUM_BIT_FOR_L = 6;
 
-size_t ALPHABET_SIZE = 96;
-
 const size_t MAX_L_THRS_EF = __MAX_L_THRS_EF;
-const uint8_t MAX_L_THRS = __MAX_L_THRS;
+const size_t MAX_L_THRS = __MAX_L_THRS;
+const size_t MAX_U_DIV_N = 1710000;
 
 const uint64_t BASE_COST = 0;
 
-const size_t BLOCK_SIZE = 5120;
+const size_t BLOCK_SIZE = 8960;
 
 static_assert((NUM_BIT_FOR_L + NUM_BIT_POINTER + NUM_BIT_TYPE + 1) % CHAR_BIT == 0); // check if byte-aligned
 
@@ -196,6 +198,37 @@ size_t lcp(string_t a, string_t b) {
             break;
     }
     return result;
+}
+
+std::ostream &operator<<(std::ostream &o, uint128_t &to_print) {
+    if (to_print >= (uint128_t(1) << 64)) {
+        o << uint64_t(to_print >> 64);
+    }
+    o << uint64_t(to_print);
+    return o;
+}
+
+std::string from_enum_to_string(node_type nt) {
+    switch (nt) {
+        case 0:
+            return "elias_fano";
+        case 1:
+            return "bitvector";
+        case 2:
+            return "packed";
+        case 3:
+            return "all_ones";
+        case 4:
+            return "elias_fano_amap";
+        case 5:
+            return "bitvector_amap";
+        case 6:
+            return "packed_amap";
+        case 7:
+            return "all_ones_amap";
+        default:
+            assert(0);
+    }
 }
 
 datasetStats dataset_stats_from_vector(std::vector<std::string> const &strings) {
@@ -338,3 +371,11 @@ void get_queries(std::vector<std::string> &dataset, std::vector<std::string> &qu
         std::shuffle(queries.begin(), queries.end(), std::mt19937{2});
 }
 
+void print_percentage(size_t all, size_t part) {
+    if (all == 0) {
+        std::cout << 0;
+        return;
+    }
+    auto d_all = double(all), d_part = double(part);
+    std::cout << std::fixed << std::setprecision(2) << double(d_part / d_all) * 100.;
+}

@@ -4,3 +4,6 @@
 [submodule "lib/ds2i"]
 	path = lib/ds2i
 	url = https://github.com/aboffa/ds2i.git
+[submodule "lib/sux"]
+	path = lib/sux
+	url = https://github.com/vigna/sux

@@ -2,8 +2,7 @@
 
 #include "uncompacted_trie.hpp"
 #include "utils.hpp"
-#include "CoCo-trie_fast.hpp"
-//#include "CoCo-trie_succinct.hpp"
+#include "CoCo-trie_v2.hpp"
 
 int main() {
     std::vector<std::string> dataset = {"compressed", "data", "structure", "trie"};
@@ -14,7 +13,7 @@ int main() {
     MIN_CHAR = ds.get_min_char();
     ALPHABET_SIZE = ds.get_alphabet_size();
 
-    CoCo_fast<> coco(dataset);
+    CoCo_v2<> coco(dataset);
 
     coco.size_in_bits(); // return number of bits
 

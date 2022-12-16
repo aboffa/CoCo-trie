@@ -6,5 +6,7 @@ echo "moving intrinsics.hpp ..." &&
 cp lib/adapted_code/intrinsics.hpp lib/ds2i/succinct &
 echo "moving compact_elias_fano.hpp ..." &&
 cp lib/adapted_code/compact_elias_fano.hpp lib/ds2i &
+echo "moving Vector.hpp ..." &&
+cp lib/adapted_code/Vector.hpp lib/sux/sux/util &
 wait
 echo "Done."

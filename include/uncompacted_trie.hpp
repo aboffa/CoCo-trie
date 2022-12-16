@@ -41,7 +41,7 @@ public:
             u_vec_real.resize(0);
             n_vec.resize(0);
 
-            node_type_vec.resize(0);;
+            node_type_vec.resize(0);
         }
 
         std::map<char, TrieNode_lw *> children;
@@ -73,6 +73,8 @@ public:
     size_t log_sigma = log_universe(ALPHABET_SIZE);
 
     static const size_t OUR_DOLLAR_ID = 0;
+
+    size_t max_l_idx = 0;
 
     Trie_lw() {
         root = new TrieNode_lw;
@@ -157,6 +159,8 @@ public:
         node->max_l_fixed = 0;
         node->max_l_amap = 0;
 
+        max_l_idx = 0;
+
         for (auto child: node->children) {
             clear_space_cost_recursive(child.second);
         }
@@ -183,7 +187,7 @@ public:
             bool to_reset = false;
             if (to_jump == 0) {
                 global_number_nodes_CoCo++;
-                // actual node of the fan-out-optimized-trie
+                // actual node of the CoCo-trie
                 if (!acc.empty())
                     source->actual_CoCo_children.emplace(std::make_pair(std::string(acc), node));
                 next_to_jump = node->l_idx;
@@ -240,11 +244,11 @@ public:
 
     // recursive function that updates the vector of Ls according its value
     void compute_codes_descendents_l_recursive(TrieNode_lw *node, size_t to_jump,
-                                               TrieNode_lw *optpar, code_type poly) {
+                                               TrieNode_lw *optpar, code_type enc_value) {
         if (node->children.empty()) {
             // add to_jump times $ (0)
             for (auto i = 0; i < to_jump; i++) {
-                poly *= ALPHABET_SIZE;
+                enc_value *= ALPHABET_SIZE;
             }
             return;
         }
@@ -253,15 +257,15 @@ public:
             // actual node of the CoCo-trie
             next_to_jump = node->l_idx;
             optpar = node;
-            poly = 0;
+            enc_value = 0;
         } else {
             next_to_jump = to_jump - 1;
         }
         for (auto child: node->children) {
-            code_type child_poly = poly;
-            child_poly *= ALPHABET_SIZE;
-            child_poly += code_type(child.first - MIN_CHAR) + 1;
-            compute_codes_descendents_l_recursive(child.second, next_to_jump, optpar, child_poly);
+            code_type child_enc_value = enc_value;
+            child_enc_value *= ALPHABET_SIZE;
+            child_enc_value += code_type(child.first - MIN_CHAR) + 1;
+            compute_codes_descendents_l_recursive(child.second, next_to_jump, optpar, child_enc_value);
         }
     }
 
@@ -319,24 +323,25 @@ public:
             source->l_idx = std::min<size_t>(std::min<size_t>(l_fixed - MIN_L, source->max_l_amap - 1),
                                              source->spacecost.size() - 1);
         }
+        max_l_idx = std::max<size_t>(max_l_idx, source->l_idx);
         source->bc = source->spacecost[source->l_idx];
     }
 
 
     // max exponent e <= l such that sigma ^ e < 2^w (machine word)
     // a closed function could be used l = log_sigma (2^w)
-    size_t check_l_max_amap(uint8_t as, uint8_t l) {
+    bool check_l_max_amap(uint8_t as, uint8_t l) {
         code_type acc = as;
         for (auto i = 1; i <= l; ++i) {
             assert(acc != code_type(0));
             code_type new_acc = acc * code_type(as);
             const bool is_overflow = (new_acc >= code_type(std::numeric_limits<code_type>::max() / code_type(as)));
             if (is_overflow) {
-                return i;
+                return false;
             }
             acc = new_acc;
         }
-        return l;
+        return true;
     }
 
     // computes the storage cost vector for all l parameter
@@ -349,11 +354,13 @@ public:
             source->alphamaps[0].template set_bit<1>(char_id);
         }
 
-        // source->max_l_amap new is the height of the node
-        for (auto i = 1; i < source->max_l_amap; i++) {
+        // source->max_l_amap is the height of the node
+        // it must be the maximum number of levels collapsable in source (considering alphabet remapping)
+        for (auto i = 1; i <= source->max_l_amap; i++) {
             source->alphamaps.emplace_back(source->alphamaps[0].bitmap);
             for (auto &child: source->children) {
                 if (child.second->alphamaps.size() == 0) {
+                    // this child is a leaf
                     continue;
                 }
                 size_t index_to_access = std::min<size_t>(child.second->alphamaps.size() - 1, i - 1);
@@ -361,13 +368,13 @@ public:
             }
 
             const size_t local_as = source->alphamaps[i].rankmax() + 1;
-            auto exponent = check_l_max_amap(local_as, i);
-            if (exponent != i) { // overflow
+            if (!check_l_max_amap(local_as, i)) { // overflow
                 source->max_l_amap = i - 1;
+                source->alphamaps.pop_back();
                 break;
             }
-
         }
+
         assert(source->max_l_amap >= MIN_L);
         source->max_l_fixed = std::min<size_t>(source->max_l_amap, MAX_L_THRS);
         assert(source->max_l_amap >= source->max_l_fixed);
@@ -390,8 +397,8 @@ public:
         // bc_in[i] sum of best (i.e. min) costs of internal nodes at level i
         // bc[i] sum of best (i.e. min) costs for level i
         // fo_n[i] number of descendants at level i (including extended leaves)
-        // min_u[i] poly id of the leftmost descendant at level i
-        // max_u[i] poly id of the rightmost descendant at level i
+        // min_u[i] enc value of the leftmost descendant at level i
+        // max_u[i] enc value of the rightmost descendant at level i
 
         std::vector<size_t> space_cost(DELTA_L_AMAP, -1);
         std::vector<size_t>
@@ -419,7 +426,7 @@ public:
             bc[i] = bc_in[i] + (part_sum_leaves * BASE_COST);
         }
 
-        // asserting the alphabet at each level is lower than the alphabet at the next level
+        // asserting the alphabet at each level is lower than / equal to the alphabet at the next level
         for (size_t i = 1; i < DELTA_L_AMAP; ++i) {
             assert(source->alphamaps[i - 1].bitmap <= source->alphamaps[i].bitmap);
         }
@@ -440,17 +447,14 @@ public:
         std::string rightmost = extreme_string_l<false>(source, DELTA_L_AMAP);
 
         for (size_t i = 0; i < DELTA_L_AMAP; ++i) {
-            code_type leftmost_poly = enc_real<const std::string &>(leftmost, i, source->alphamaps[i]);
-            code_type rightmost_poly = enc_real<const std::string &>(rightmost, i, source->alphamaps[i]);
-            assert(leftmost_poly <= rightmost_poly);
-            min_u_real[i] = leftmost_poly;
-            max_u_real[i] = rightmost_poly;
+            code_type leftmost_enc = enc_real<const std::string &>(leftmost, i, source->alphamaps[i]);
+            code_type rightmost_enc = enc_real<const std::string &>(rightmost, i, source->alphamaps[i]);
+            assert(leftmost_enc <= rightmost_enc);
+            min_u_real[i] = leftmost_enc;
+            max_u_real[i] = rightmost_enc;
         }
 
-        // fill min_u_real and max_u_real
-        // compute_poly_minmax_real<true>(source, min_u_real, DELTA_L);
         assert(std::is_sorted(min_u_real.begin(), min_u_real.end()));
-        // compute_poly_minmax_real<false>(source, max_u_real, DELTA_L);
         assert(std::is_sorted(max_u_real.begin(), max_u_real.end()));
 
         for (size_t i = 0; i < DELTA_L_FIXED; ++i) {
@@ -476,7 +480,7 @@ public:
             source->n_vec[i] = n;
             source->u_vec_real[i] = u_real;
 
-            // checking space for best encoded u
+            // checking the best encoding considering space usage
             if (n == 0 or code_type(n) == u) {
                 space_bits_best = 0;
                 source->node_type_vec[i] = all_ones;
@@ -487,7 +491,8 @@ public:
                 size_t space_bits_packed = -1, space_bits_elias_fano = -1, space_bits_bitvector = -1;
 
                 space_bits_packed = n * logu;
-                if (i < MAX_L_THRS_EF) {
+                size_t u_div_n = u / n;
+                if (i < MAX_L_THRS_EF and u_div_n < MAX_U_DIV_N) {
                     space_bits_elias_fano = ds2i::compact_elias_fano<code_type>::bitsize(params, u, n);
                     space_bits_elias_fano += bits_delta_code(u);
                 }
@@ -497,7 +502,8 @@ public:
                 // assign it to space_bits_bitvector, and we will check if it is the best encoding.
                 if (u <= code_type(1) << 63) {
                     space_bits_bitvector = (size_t) u;
-                    space_bits_bitvector += (u / BLOCK_SIZE) * logu;
+                    size_t num_sample = u / BLOCK_SIZE;
+                    space_bits_bitvector += num_sample * logu;
                 }
                 if (space_bits_elias_fano < space_bits_packed and space_bits_elias_fano < space_bits_bitvector) {
                     space_bits_best = space_bits_elias_fano;
@@ -524,7 +530,7 @@ public:
 
                     space_bits_packed_amap = (n * logu_real) + ALPHABET_SIZE;
 
-                    if (i < MAX_L_THRS_EF) {
+                    if (i < MAX_L_THRS_EF and u_div_n < MAX_U_DIV_N) {
                         space_bits_elias_fano_amap =
                                 ds2i::compact_elias_fano<code_type>::bitsize(params, u_real, n) + ALPHABET_SIZE;
                         space_bits_elias_fano_amap += bits_delta_code(u_real);
@@ -571,6 +577,7 @@ public:
                 space_bits_fixed += NUM_BIT_POINTER; // pointer to the encoded bitvector bits where the node encoding starts
                 space_bits_fixed += NUM_BIT_TYPE; // bit to understand which encoding scheme is used
                 space_bits_fixed += 1; // bit to understand if the node is end of word
+
                 space_cost[i] = space_bits_fixed + space_bits_best /*local cost*/ + bc[i] /*descendant cost*/ ;
             }
         }
@@ -600,7 +607,8 @@ public:
 
                 if (u_real <= code_type(1) << 63) {
                     space_bits_bitvector_amap = size_t(u_real) + ALPHABET_SIZE;
-                    space_bits_bitvector_amap += (u_real / BLOCK_SIZE) * logu_real;
+                    size_t num_sample = u_real / BLOCK_SIZE;
+                    space_bits_bitvector_amap += num_sample * logu_real;
                 }
 
                 if (space_bits_bitvector_amap < space_bits_best and
@@ -625,7 +633,6 @@ public:
                 space_bits_fixed += NUM_BIT_POINTER; // pointer to the encoded bitvector bits where the node encoding starts
                 space_bits_fixed += NUM_BIT_TYPE; // bit to understand which encoding scheme is used
                 space_bits_fixed += 1; // bit to understand if the node is end of word
-
 
                 space_cost[i] = space_bits_fixed + space_bits_best /*local cost*/ + bc[i] /*descendant cost*/ ;
             }
@@ -781,6 +788,7 @@ public:
     template<typename string>
     static code_type enc(string s, size_t base_l) {
         code_type result = 0;
+        assert(!s.empty());
         code_type codeOfChar = (s[0] - MIN_CHAR) + 1;
         assert(codeOfChar <= code_type(ALPHABET_SIZE));
         result = codeOfChar;
@@ -797,110 +805,5 @@ public:
         assert(log_universe(result) <= (base_l + MIN_L) * log_universe(ALPHABET_SIZE));
         assert(result != code_type(0));
         return result;
-    }
-};
-
-class Trie_simple {
-public:
-    struct TrieNode_simple {
-        TrieNode_simple() {
-            isEndOfWord = false;
-            has_just_one_descendant_leaf = false;
-        }
-
-        std::map<char, TrieNode_simple *> children;
-
-        // isEndOfWord is true if the node
-        // represents the end of a word
-        bool isEndOfWord;
-        bool has_just_one_descendant_leaf;
-    };
-
-    TrieNode_simple *root;
-    std::string filename;
-
-    Trie_simple() {
-        root = new TrieNode_simple;
-    }
-
-    ~Trie_simple() {
-        recursive_delete(root);
-    }
-
-    void recursive_delete(TrieNode_simple *node) {
-        for (auto child: node->children) {
-            recursive_delete(child.second);
-        }
-        delete (node);
-    }
-
-    void set_filename(std::string &_filename) {
-        filename = _filename;
-    }
-
-    // If not present, inserts key into trie
-    // If the key is prefix of trie node, just
-    // marks leaf node
-    void insert(std::string &key) {
-        TrieNode_simple *pCrawl = root;
-
-        for (auto i = 0; i < key.length(); i++) {
-            if (pCrawl->children.find(key[i]) == pCrawl->children.end()) {
-                pCrawl->children[key[i]] = new TrieNode_simple();
-            }
-
-            pCrawl = pCrawl->children[key[i]];
-        }
-
-        // mark last node as leaf
-        pCrawl->isEndOfWord = true;
-    }
-
-    void remove_unary_suffix_chains() {
-        remove_unary_suffix_chains_recursive(this->root);
-    }
-
-    void remove_unary_suffix_chains_recursive(TrieNode_simple *node) {
-        for (auto child: node->children) {
-            remove_unary_suffix_chains_recursive(child.second);
-        }
-
-        if (node->children.empty()) /*leaf node*/ {
-            node->has_just_one_descendant_leaf = true;
-        } else /*internal node*/ {
-            node->has_just_one_descendant_leaf =
-                    node->children.size() == 1 and node->children.begin()->second->has_just_one_descendant_leaf;
-            if (node->has_just_one_descendant_leaf) /*clear all children*/{
-                node->children.clear();
-            }
-        }
-    }
-
-    // recursive function to write the set of strings contained in the trie
-    void write_on_file_recursive(std::ofstream &opened_file, std::string &accumulator, TrieNode_simple *node) {
-        if (node->children.empty()) {
-            opened_file << accumulator << std::endl;
-        } else {
-            if (node->isEndOfWord) {
-                opened_file << accumulator << std::endl;
-            }
-            for (auto child: node->children) {
-                accumulator.push_back(child.first);
-                write_on_file_recursive(opened_file, accumulator, child.second);
-            }
-        }
-        accumulator.pop_back();
-    }
-
-    void write_on_file(std::string &filename_to_write) {
-        std::ofstream file;
-        file.open(filename_to_write);
-        if (file.is_open()) {
-            std::string accumulator = "";
-            write_on_file_recursive(file, accumulator, root);
-        } else {
-            std::cerr << "Error while writing file " << filename_to_write << std::endl;
-            exit(1);
-        }
     }
 };
