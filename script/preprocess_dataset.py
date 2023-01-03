@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 import sys
 
 def return_only_ascii(str):
@@ -53,17 +52,11 @@ if __name__ == "__main__":
             original_lines[i] = return_only_ascii(s)
 
         original_lines.sort()
-        original_lines = list(set(original_lines))
-        original_lines.sort()
-        dpa = distinguishing_prefix(original_lines)
-        dpa = list(set(dpa))
-        dpa.sort()
+        original_lines = sorted(set(original_lines))
 
-        sum = 0
-        for i, s in enumerate(dpa):
-            sum += len(s)
-            if sum > 10**10:
-                dpa = dpa[:i]
+        dpa = distinguishing_prefix(original_lines)
+
+        dpa = sorted(set(dpa))
 
         with open(arg + '_distinguishing_new', mode='w') as f:
             f.write('\n'.join(dpa))

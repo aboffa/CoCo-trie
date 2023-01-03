@@ -192,7 +192,7 @@ public:
     }
 
     template<typename root_type>
-    void build_CoCo_from_uncompated_trie(root_type root) {
+    void build_CoCo_from_uncompacted_trie(root_type root) {
         succinct::bit_vector_builder internal_variable_tmp;
         std::queue<root_type> q;
         q.push(root);
@@ -330,7 +330,7 @@ public:
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
 
-        build_CoCo_from_uncompated_trie(uncompacted.root);
+        build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
 
@@ -340,7 +340,7 @@ public:
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
 
-        build_CoCo_from_uncompated_trie(uncompacted.root);
+        build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
     // return a unique id for a string to_search of -1 if it does not exist

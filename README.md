@@ -61,16 +61,13 @@ int main() {
 }
 
 ```
-## Run the benchmark 🚀
 
-Example datasets are in the directory `dataset`. To get the space/time performance run:
-```bash
-cd build
-./coco-trie_bench_big_alphabet ../dataset/it-2004.urls_no_suffixes_small
-./coco-trie_bench_small_alphabet ../dataset/dna-k-mer.txt_no_suffixes_small
-```
+## Datasets 💽
+Examples of already preprocessed small datasets are in the directory `dataset`.
 
-Bigger datasets are available here: 
+Already preprocessed big datasets are available [here](https://drive.google.com/drive/folders/1x2tCAMyltD-bu1pYc7A9_4DcZJOqElna?usp=share_link).
+
+Bigger datasets are available here:
 
 - https://law.di.unimi.it/webdata/it-2004/
 - http://pizzachili.dcc.uchile.cl/texts/xml/
@@ -79,9 +76,17 @@ Bigger datasets are available here:
 - http://pizzachili.dcc.uchile.cl/texts/dna/
 
 To preprocess the dataset and get the shortest prefix of every string that distinguishes it from the other strings run `script/preprocess_dataset.py`.
+To get k-mers from `dna` dataset execute the code in the script `script/extract_k_mers.py`.
 
-To get 12-mers from `dna` dataset execute the code in the script `script/extract_k_mers.py`. 
 
+## Run the benchmark 🚀
+
+ To get the space/time performance run:
+```bash
+cd build
+./coco-trie_bench_big_alphabet ../dataset/it-2004.urls_no_suffixes_small
+./coco-trie_bench_small_alphabet ../dataset/dna-k-mer.txt_no_suffixes_small
+```
 
 ## Run the tests 🛫
 For executing the tests:

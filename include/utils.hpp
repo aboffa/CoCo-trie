@@ -100,14 +100,14 @@ const size_t BLOCK_SIZE = 8960;
 
 static_assert((NUM_BIT_FOR_L + NUM_BIT_POINTER + NUM_BIT_TYPE + 1) % CHAR_BIT == 0); // check if byte-aligned
 
-// To test just 50% set:
-//const size_t start_q_perc = 0;
-//const size_t end_q_perc = 50;
-//const size_t step_q_perc = 101;
+// To test just 50% queries in the set and 50% not in the set:
+const size_t start_q_perc = 50;
+const size_t end_q_perc = 100;
+const size_t step_q_perc = 101;
 
-const size_t start_q_perc = 0;
-const size_t end_q_perc = 101;
-const size_t step_q_perc = 25;
+//const size_t start_q_perc = 0;
+//const size_t end_q_perc = 101;
+//const size_t step_q_perc = 25;
 
 const size_t cache_line_bits = 64 * CHAR_BIT;
 

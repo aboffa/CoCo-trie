@@ -43,7 +43,7 @@ public:
     uint8_t log_sigma = log_universe(ALPHABET_SIZE);
 
     template<typename root_type>
-    void build_CoCo_from_uncompated_trie(root_type root) {
+    void build_CoCo_from_uncompacted_trie(root_type root) {
         succinct::bit_vector_builder bvb;
         size_t num_built_nodes = 0;
         std::queue<root_type> q;
@@ -195,7 +195,7 @@ public:
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
 
         bits_for_L = log_universe((uint64_t) uncompacted.max_l_idx);
-        build_CoCo_from_uncompated_trie(uncompacted.root);
+        build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
     CoCo_v2(utrie_t &uncompacted) {
@@ -205,7 +205,7 @@ public:
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
         bits_for_L = log_universe((uint64_t) uncompacted.max_l_idx);
-        build_CoCo_from_uncompated_trie(uncompacted.root);
+        build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
     // return a unique id for a string to_search or -1 if it does not exist
