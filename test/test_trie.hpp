@@ -17,7 +17,7 @@
 #ifndef COCO_TRIE_TEST_TRIE_H
 #define COCO_TRIE_TEST_TRIE_H
 
-template<typename trie_t>
+template<typename trie_t, bool dfuds = false>
 void test_trie(trie_t &coco_trie, std::vector<std::string> dataset, const datasetStats &ds) {
     std::vector<size_t> look_up_results(dataset.size());
     for (auto i = 0; i < dataset.size(); ++i) {
@@ -25,7 +25,11 @@ void test_trie(trie_t &coco_trie, std::vector<std::string> dataset, const datase
         REQUIRE(look_up_res != size_t(-1));
         look_up_results[i] = look_up_res;
     }
-    std::sort(look_up_results.begin(), look_up_results.end());
+    if (dfuds) {
+        REQUIRE(std::is_sorted(look_up_results.begin(), look_up_results.end()));
+    } else {
+        std::sort(look_up_results.begin(), look_up_results.end());
+    }
     bool containsDuplicates = (std::unique(look_up_results.begin(), look_up_results.end()) !=
                                look_up_results.end());
     REQUIRE(!containsDuplicates);

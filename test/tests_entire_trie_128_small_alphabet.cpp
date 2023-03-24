@@ -22,7 +22,7 @@
 
 #include "uncompacted_trie.hpp"
 #include "utils.hpp"
-#include "CoCo-trie_v2.hpp"
+#include "CoCo-trie_dfuds.hpp"
 #include "test_trie.hpp"
 
 std::vector<std::string> filenames = {
@@ -146,6 +146,21 @@ TEST_CASE("Test CoCo_v2 l<25 optimal uint128", "") {
     }
 }
 
+TEST_CASE("Test CoCo_dfuds l<25 optimal uint128", "") {
+    for (auto j = 0; j < filenames.size(); ++j) {
+        std::vector<std::string> dataset;
+        datasetStats ds = load_data_from_file(dataset, filenames[j]);
+
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
+
+        REQUIRE(ALPHABET_SIZE < 127);
+
+        CoCo_dfuds<> coco_trie(dataset);
+        test_trie<CoCo_dfuds<>, true>(coco_trie, dataset, ds);
+    }
+}
+
 TEST_CASE("Test CoCo_v2 l<25 optimal uint128 space relaxation", "") {
     for (auto j = 0; j < filenames.size(); ++j) {
         std::vector<std::string> dataset;
@@ -159,6 +174,27 @@ TEST_CASE("Test CoCo_v2 l<25 optimal uint128 space relaxation", "") {
         static_for<1, 21, 4>([&](auto space_relaxations_percentage) {
             CoCo_v2<1, uint128_t, MAX_L_THRS, space_relaxations_percentage> coco_trie(dataset);
             test_trie(coco_trie, dataset, ds);
+        });
+    }
+}
+
+TEST_CASE("Test CoCo_dfuds l<25 optimal uint128 space relaxation", "") {
+    for (auto j = 0; j < filenames.size(); ++j) {
+        std::vector<std::string> dataset;
+        datasetStats ds = load_data_from_file(dataset, filenames[j]);
+
+        MIN_CHAR = ds.get_min_char();
+        ALPHABET_SIZE = ds.get_alphabet_size();
+
+        REQUIRE(ALPHABET_SIZE < 127);
+
+        static_for<1, 21, 4>([&](auto space_relaxations_percentage) {
+            CoCo_dfuds<1, uint128_t, MAX_L_THRS, space_relaxations_percentage, sdsl::bp_support_g<>,
+                    sux::bits::SimpleSelectZero<>, sdsl::rank_support_v<0, 2>> coco_trie(
+                    dataset);
+            test_trie<CoCo_dfuds<1, uint128_t, MAX_L_THRS, space_relaxations_percentage, sdsl::bp_support_g<>,
+                    sux::bits::SimpleSelectZero<>, sdsl::rank_support_v<0, 2>>, true>(
+                    coco_trie, dataset, ds);
         });
     }
 }

@@ -21,6 +21,7 @@
 
 #include "utils.hpp"
 #include "louds_sux.hpp"
+#include "dfuds.hpp"
 #include "alphabet_remapping.hpp"
 
 typedef unsigned __int128 uint128_t;
@@ -45,6 +46,28 @@ std::vector<size_t> example_tree_fan_out = {3,
                                             0,
                                             0,
                                             0,
+};
+
+std::vector<size_t> example_tree_fan_out_DF = {3,
+                                               2,
+                                               0,
+                                               0,
+                                               2,
+                                               2,
+                                               1,
+                                               3,
+                                               0,
+                                               0,
+                                               0,
+                                               0,
+                                               1,
+                                               4,
+                                               0,
+                                               1,
+                                               0,
+                                               0,
+                                               0,
+                                               0,
 };
 
 TEST_CASE("Test alphamap [set_bit<0/1>]", "") {
@@ -423,13 +446,6 @@ TEST_CASE("Test topology LOUDS SUX, general", "") {
     REQUIRE(topology.nextZero(28) == 31);
     REQUIRE(topology.nextZero(35) == 35);
 
-    // tests num_child
-    REQUIRE(topology.num_child(2) == 3);
-    REQUIRE(topology.num_child(15) == 2);
-    REQUIRE(topology.num_child(23) == 4);
-    REQUIRE(topology.num_child(28) == 3);
-    REQUIRE(topology.num_child(33) == 1);
-
     // tests n_th_child_rank
     REQUIRE(topology.n_th_child_rank(2, 1) == 1);
     REQUIRE(topology.n_th_child_rank(2, 2) == 2);
@@ -493,6 +509,111 @@ TEST_CASE("Test topology LOUDS SUX, general", "") {
     REQUIRE(level == 4);
 }
 
+TEST_CASE("Test topology DFUDS, general", "") {
+    dfuds topology(20);
+    for (auto x: example_tree_fan_out_DF)
+        topology.add_node(x);
+
+    topology.build_rank_select_ds();
+
+    // tests node_select
+    REQUIRE(topology.node_select(1) == 3);
+    REQUIRE(topology.node_select(2) == 7);
+    REQUIRE(topology.node_select(3) == 10);
+    REQUIRE(topology.node_select(4) == 11);
+    REQUIRE(topology.node_select(11) == 26);
+
+    // tests node_rank
+    REQUIRE(topology.node_rank(3) == 0);
+    REQUIRE(topology.node_rank(7) == 1);
+    REQUIRE(topology.node_rank(15) == 5);
+    REQUIRE(topology.node_rank(25) == 9);
+    REQUIRE(topology.node_rank(35) == 14);
+
+    for (auto i = 1; i < 19; ++i) {
+        REQUIRE((i - 1) == topology.node_rank(topology.node_select(i)));
+    }
+
+    // tests num_child
+    REQUIRE(topology.num_child(3) == 3);
+    REQUIRE(topology.num_child(15) == 2);
+    REQUIRE(topology.num_child(20) == 3);
+    REQUIRE(topology.num_child(24) == 0);
+    REQUIRE(topology.num_child(30) == 4);
+
+    REQUIRE(topology.n_th_child(3, 1) == 7);
+    REQUIRE(topology.n_th_child(3, 2) == 12);
+    REQUIRE(topology.n_th_child(15, 1) == 18);
+    REQUIRE(topology.n_th_child(15, 2) == 27);
+
+    // tests n_th_child_rank
+    REQUIRE(topology.n_th_child_rank(3, 1) == 1);
+    REQUIRE(topology.n_th_child_rank(3, 2) == 4);
+    REQUIRE(topology.n_th_child_rank(15, 1) == 6);
+    REQUIRE(topology.n_th_child_rank(15, 2) == 11);
+    REQUIRE(topology.n_th_child_rank(20, 1) == 8);
+    REQUIRE(topology.n_th_child_rank(20, 2) == 9);
+    REQUIRE(topology.n_th_child_rank(20, 3) == 10);
+    REQUIRE(topology.n_th_child_rank(30, 1) == 14);
+    REQUIRE(topology.n_th_child_rank(30, 2) == 15);
+    REQUIRE(topology.n_th_child_rank(30, 3) == 17);
+    REQUIRE(topology.n_th_child_rank(30, 4) == 18);
+
+    // tests is_leaf
+    {
+        const size_t N_NODES = 20, N_LEAVES = 11;
+        size_t leafs[N_LEAVES] = {2, 3, 8, 9, 10, 11, 14, 16, 17, 18, 19};
+        size_t node_rank = 0, lf_idx = 0;
+        for (; node_rank < N_NODES; ++node_rank) {
+            assert(lf_idx + 1 < N_NODES);
+            size_t v = topology.node_select(node_rank + 1);
+            size_t next_leaf = leafs[lf_idx];
+            if (node_rank == next_leaf) {
+                REQUIRE (topology.is_leaf(v) == true);
+                ++lf_idx;
+            } else {
+                REQUIRE (topology.is_leaf(v) == false);
+            }
+        }
+        assert(lf_idx == N_LEAVES);
+    }
+
+    // tests internal_rank
+    REQUIRE(topology.internal_rank(topology.node_select(4), 4) == 2);
+    REQUIRE(topology.internal_rank(topology.node_select(5), 5) == 3);
+    REQUIRE(topology.internal_rank(topology.node_select(6), 6) == 4);
+    REQUIRE(topology.internal_rank(topology.node_select(12), 12) == 6);
+    REQUIRE(topology.internal_rank(topology.node_select(13), 13) == 7);
+    REQUIRE(topology.internal_rank(topology.node_select(15), 15) == 8);
+
+    //traversal
+    size_t internal_rank = 0; //number of internal nodes before bv_index (initially refers to the root)
+    size_t node_rank = 0; //number of nodes before  bv_index (initially refers to the root)
+    size_t bv_index = 3; //position in the bv (initially refers to the root)
+
+    size_t node_ranks[] = {4, 12, 13, 15, 16};
+    size_t int_ranks[] = {2, 6, 7, 8};
+    size_t child_seq[] = {2, 2, 1, 2, 1};
+    size_t bv_idxs[] = {12, 28, 30, 36, 38};
+
+    int level = 0;
+    while (true) {
+        REQUIRE(level <= 4);
+        REQUIRE(!topology.is_leaf(bv_index));
+        node_rank = topology.n_th_child_rank(bv_index, child_seq[level]);
+        REQUIRE(node_rank == node_ranks[level]);
+        bv_index = topology.node_select(node_rank + 1);
+        REQUIRE(bv_index == bv_idxs[level]);
+        if (topology.is_leaf(bv_index))
+            break;
+        internal_rank = topology.internal_rank(bv_index, node_rank);
+        REQUIRE(internal_rank == int_ranks[level]);
+
+        level += 1;
+    }
+    REQUIRE(level == 4);
+}
+
 TEST_CASE("Test topology LOUDS SUX equivalence, general", "") {
     louds_sux<sdsl::rank_support_v<1>, sdsl::rank_support_v<0, 2>, sdsl::select_support_mcl<0>> topology(20);
     louds_sux topology_sux(20);
@@ -518,5 +639,4 @@ TEST_CASE("Test topology LOUDS SUX equivalence, general", "") {
     for (auto i = 1; i < 20; i++) {
         REQUIRE(topology.num_child(topology.node_select(i)) == topology_sux.num_child(topology_sux.node_select(i)));
     }
-
 }
