@@ -23,13 +23,12 @@ template<uint8_t MIN_L = 1,
         uint8_t MAX_L_THRS = MAX_L_THRS,
         uint8_t space_relaxation = 0, // in percentage
         typename bp_support = sdsl::bp_support_g<>,
-        typename select0_type = sux::bits::SimpleSelectZero<>,
         typename rank_support00 = sdsl::rank_support_v<0, 2>>
 class CoCo_dfuds {
 public:
     using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
     using CoCo_v1_t = CoCo_v1<>;
-    using topology_t = dfuds<bp_support, select0_type, rank_support00>;
+    using topology_t = dfuds<bp_support, rank_support00>;
 
     std::unique_ptr<succinct::bit_vector> internal_variable;
 
@@ -216,7 +215,7 @@ public:
     size_t look_up(const std::string &to_search) const {
         size_t internal_rank = 0; // number of internal nodes before bv_index (initially refers to the root)
         size_t node_rank = 0; // number of nodes before  bv_index (initially refers to the root)
-        size_t bv_index = 3; // position in the bv (initially refers to the root)
+        size_t bv_index = topology_t::root_idx; // position in the bv (initially refers to the root)
         size_t scanned_chars = 0; // accumulator of l values.
         std::string_view substr;
         size_t n = num_child_root;
@@ -228,7 +227,7 @@ public:
             auto nt = (node_type) it.take(NUM_BIT_TYPE);
             bool is_end_of_world = it.take(1);
             if (to_search.size() == scanned_chars) {
-                return is_end_of_world ? topology->node_rank(bv_index) : -1;
+                return is_end_of_world ? node_rank : -1;
             }
             const bool is_remapped = (nt >= elias_fano_amap);
             code_type first_code = 0;
@@ -327,10 +326,10 @@ public:
                 return -1;
             }
             scanned_chars += l + MIN_L;
-            // number of nodes before  bv_index (initially refers to the root
-            node_rank = topology->n_th_child_rank(bv_index, child_to_continue);
             // position in the bv (initially refers to the root)
-            bv_index = topology->node_select(node_rank + 1);
+            bv_index = topology->n_th_child(bv_index, child_to_continue);
+            // node index (initially refers to the root)
+            node_rank = topology->node_rank(bv_index);
             if (topology->is_leaf(bv_index)) {
                 return (scanned_chars < to_search.size()) ? -1 : node_rank;
             }

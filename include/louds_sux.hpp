@@ -45,6 +45,9 @@ struct louds_sux {
 
     ~louds_sux() {}
 
+    // index of the root
+    static const size_t root_idx = 2;
+
     void add_node(size_t num_child) {
         for (auto i = 0; i < num_child; ++i) {
             bv[build_p++] = 1;
@@ -65,7 +68,7 @@ struct louds_sux {
         assert(bv.size() == this->build_p);
     }
 
-    // from position in the bv to node index
+    // from position in the bv to node index (0-based)
     size_t node_rank(size_t v) const {
         // it is just rank_0(v-1)
         return (v - 1) - rs1.rank(v - 1);

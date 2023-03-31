@@ -208,11 +208,11 @@ public:
         build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
-    // return a unique id for a string to_search or -1 if it does not exist
+    // return a unique id of the string to_search or -1 if it does not exist
     size_t look_up(const std::string &to_search) const {
         size_t internal_rank = 0; // number of internal nodes before bv_index (initially refers to the root)
         size_t node_rank = 0; // number of nodes before  bv_index (initially refers to the root)
-        size_t bv_index = 2; // position in the bv (initially refers to the root)
+        size_t bv_index = louds_sux<>::root_idx; // position in the bv (initially refers to the root)
         size_t scanned_chars = 0; // accumulator of l values.
         std::string_view substr;
         size_t n = num_child_root;
@@ -224,7 +224,7 @@ public:
             auto nt = (node_type) it.take(NUM_BIT_TYPE);
             bool is_end_of_world = it.take(1);
             if (to_search.size() == scanned_chars) {
-                return is_end_of_world ? topology->node_rank(bv_index) : -1;
+                return is_end_of_world ? node_rank : -1;
             }
             const bool is_remapped = (nt >= elias_fano_amap);
             code_type first_code = 0;

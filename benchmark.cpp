@@ -32,7 +32,7 @@ void usage(char **argv) {
 }
 
 template<typename uncompact_trie_t, typename CoCo_trie_t>
-void test_trie(uncompact_trie_t &trie, uint8_t l_fixed, std::vector<std::string> &queries) {
+void test_trie(uncompact_trie_t &trie, uint8_t l_fixed, const std::vector<std::string> &queries) {
     auto start = timer::now();
     trie.space_cost_all_nodes(l_fixed);
     double avg_jump = 0;

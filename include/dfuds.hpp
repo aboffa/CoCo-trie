@@ -25,14 +25,12 @@
 #pragma once
 
 template<typename bp_support = sdsl::bp_support_g<>,
-        typename select0_type = sux::bits::SimpleSelectZero<>,
         typename rank_support00 = sdsl::rank_support_v<0, 2>>
 struct dfuds {
     sdsl::bit_vector bv;
     // pointer used while building
     size_t build_p = 0;
     bp_support bps;
-    select0_type ss0;
     rank_support00 rs00;
 
     dfuds() = default;
@@ -48,6 +46,9 @@ struct dfuds {
 
     ~dfuds() {}
 
+    // index of the root
+    static const size_t root_idx = 3;
+
     void add_node(size_t num_child) {
         for (auto i = 0; i < num_child; ++i) {
             bv[build_p++] = 1;
@@ -58,36 +59,18 @@ struct dfuds {
     void build_rank_select_ds() {
         assert(bv.size() == this->build_p);
         // init balanced parenthesis support
-        if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZero<>>)
-            ss0 = select0_type(bv.data(), bv.size(), 2);
-        else if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZeroHalf<>>)
-            ss0 = select0_type(bv.data(), bv.size());
-        else
-            ss0 = select0_type(&bv);
-        rs00 = rank_support00(&bv);
         bps = bp_support(&bv);
+        rs00 = rank_support00(&bv);
     }
 
-    // from position in the bv to node index
+    // from position in the bv to node index (0-based)
     size_t node_rank(size_t v) const {
         // it is just rank_0(v-1)
         return (v - 1) - bps.rank(v - 1);
     }
 
-    // from index of nodes to position in the bv
-    size_t node_select(size_t i) {
-        if constexpr (std::is_same_v<select0_type, sdsl::select_support_mcl<0>>)
-            return ss0.select(i) + 1;
-        else
-            return ss0.selectZero(i - 1) + 1;
-    }
-
     size_t size_in_bytes() const {
         size_t to_return = 0;
-        if constexpr (std::is_same_v<select0_type, sdsl::select_support_mcl<0>>)
-            to_return += sdsl::size_in_bytes(ss0);
-        else
-            to_return += ss0.bitCount() / CHAR_BIT;
         to_return += sdsl::size_in_bytes(bps);
         to_return += sdsl::size_in_bytes(rs00);
         to_return += sdsl::size_in_bytes(bv);

@@ -189,12 +189,10 @@ TEST_CASE("Test CoCo_dfuds l<25 optimal uint128 space relaxation", "") {
         REQUIRE(ALPHABET_SIZE < 127);
 
         static_for<1, 21, 4>([&](auto space_relaxations_percentage) {
-            CoCo_dfuds<1, uint128_t, MAX_L_THRS, space_relaxations_percentage, sdsl::bp_support_g<>,
-                    sux::bits::SimpleSelectZero<>, sdsl::rank_support_v<0, 2>> coco_trie(
-                    dataset);
-            test_trie<CoCo_dfuds<1, uint128_t, MAX_L_THRS, space_relaxations_percentage, sdsl::bp_support_g<>,
-                    sux::bits::SimpleSelectZero<>, sdsl::rank_support_v<0, 2>>, true>(
-                    coco_trie, dataset, ds);
+            CoCo_dfuds<1, uint128_t, MAX_L_THRS, space_relaxations_percentage, sdsl::bp_support_gg<>,
+                    sdsl::rank_support_v<0, 2>> coco_trie(dataset);
+            test_trie<CoCo_dfuds<1, uint128_t, MAX_L_THRS, space_relaxations_percentage, sdsl::bp_support_gg<>,
+                    sdsl::rank_support_v<0, 2>>, true>(coco_trie, dataset, ds);
         });
     }
 }
