@@ -186,6 +186,16 @@ namespace succinct {
             std::swap(m_cur_word, other.m_cur_word);
         }
 
+        bit_vector_builder(std::istream &in) {
+            uint64_t tmp;
+            in.read((char *) &tmp, sizeof(uint64_t));
+            m_size = tmp;
+            uint64_t num_words = detail::words_for(m_size);
+
+            m_bits.resize(num_words, 0);
+            in.read((char *) (m_bits.data()), num_words * sizeof(uint64_t));
+        }
+
         bits_type m_bits;
         uint64_t m_size;
         uint64_t *m_cur_word;
@@ -243,6 +253,16 @@ namespace succinct {
 
         inline size_t size() const {
             return m_size;
+        }
+
+        size_t serialize(std::ostream &out) const {
+            size_t to_return = 0;
+            out.write(reinterpret_cast<const char *>(&m_size), sizeof(uint64_t));
+            to_return += sizeof(uint64_t);
+            uint64_t num_words = detail::words_for(m_size);
+            out.write(reinterpret_cast<const char *>(m_bits.data()), num_words * sizeof(uint64_t));
+            to_return += num_words * sizeof(uint64_t);
+            return to_return;
         }
 
         inline bool operator[](uint64_t pos) const {
@@ -396,25 +416,6 @@ namespace succinct {
                     return uint128_t(take(l));
                 }
             }
-
-#if defined(__clang__)
-            /*scritta da noi*/
-            inline uint256_t take256(size_t l) {
-                //assert(l > 0);
-                if (l > 128) {
-                    uint128_t hi, lo;
-                    hi = take128(l - 128);
-                    lo = take128(128);
-                    uint256_t result = hi;
-                    result = (result << 128);
-                    result += (uint256_t) lo;
-                    return result;
-                } else {
-                    uint128_t result = take128(l);
-                    return result;
-                }
-            }
-#endif
 
             inline uint64_t skip_zeros() {
                 uint64_t zs = 0;

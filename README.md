@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/aboffa/CoCo-trie/blob/main/static/coco-logo.png" height=150 />
+  <img src="https://github.com/aboffa/CoCo-trie/blob/main/static/coco-logo.png" height=150  alt="CoCo-trie logo"/>
 </p>
 
 # CoCo-trie
@@ -14,7 +14,7 @@ CoCo-trie compresses and collapses subtrees in a principled and effective  way.
 
 It hinges upon a data-aware optimisation scheme that selects the best subtries to collapse based on a pool of succinct encoding schemes in order to minimise the overall space occupancy.
 
-An introduction to string dictionary, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the [paper](https://link.springer.com/chapter/10.1007/978-3-031-20643-6_17):
+An introduction to the string dictionary problem, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the paper: [(DOI)](https://link.springer.com/chapter/10.1007/978-3-031-20643-6_17) [(PDF)](https://pages.di.unipi.it/boffa/files/SPIRE.pdf)
 
 >  Boffa, A., Ferragina, P., Tosoni, F., Vinciguerra, G. (2022). Compressed String Dictionaries via Data-Aware Subtrie Compaction. In: Arroyuelo, D., Poblete, B. (eds) String Processing and Information Retrieval. SPIRE 2022. Lecture Notes in Computer Science, vol 13617. Springer, Cham. https://doi.org/10.1007/978-3-031-20643-6_17
 

@@ -8,6 +8,10 @@ add_executable(tests_entire_trie_128_big_alphabet main.cpp tests_entire_trie_128
 target_link_libraries(tests_entire_trie_128_big_alphabet sdsl succinct ${Boost_LIBRARIES})
 target_compile_definitions(tests_entire_trie_128_big_alphabet PRIVATE BIG_ALPHABET)
 
+add_executable(tests_serialize_load main.cpp tests_serialize_load.cpp)
+target_link_libraries(tests_serialize_load sdsl succinct ${Boost_LIBRARIES})
+target_compile_definitions(tests_serialize_load PRIVATE BIG_ALPHABET)
+
 add_executable(tests_entire_trie_128_small_alphabet main.cpp tests_entire_trie_128_small_alphabet.cpp)
 target_link_libraries(tests_entire_trie_128_small_alphabet sdsl succinct ${Boost_LIBRARIES})
 

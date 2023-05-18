@@ -98,7 +98,7 @@ public:
     // If not present, inserts key into trie
     // If the key is prefix of trie node, just
     // marks leaf node
-    void insert(std::string &key) {
+    void insert(const std::string &key) {
         TrieNode_lw *pCrawl = root;
 
         for (auto i = 0; i < key.length(); i++) {

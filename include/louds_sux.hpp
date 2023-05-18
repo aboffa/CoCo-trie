@@ -45,6 +45,20 @@ struct louds_sux {
 
     ~louds_sux() {}
 
+    louds_sux(sdsl::bit_vector &_bv) {
+        size_t _bv_size = _bv.size();
+        bv.swap(_bv);
+        assert(bv.size() == _bv_size);
+        rs1 = rank_support1(&bv);
+        rs00 = rank_support00(&bv);
+        if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZero<>>)
+            ss0 = select0_type(bv.data(), bv.size(), 2);
+        else if constexpr (std::is_same_v<select0_type, sux::bits::SimpleSelectZeroHalf<>>)
+            ss0 = select0_type(bv.data(), bv.size());
+        else
+            ss0 = select0_type(&bv);
+    }
+
     // index of the root
     static const size_t root_idx = 2;
 
@@ -94,6 +108,7 @@ struct louds_sux {
         to_return += sizeof(louds_sux);
         return to_return;
     }
+
 
     inline size_t size_in_bits() const {
         size_t to_return = size_in_bytes();

@@ -40,7 +40,7 @@ public:
 
     size_t bits_for_L = log_universe((uint64_t) MAX_L_THRS);
 
-    uint8_t log_sigma = log_universe(ALPHABET_SIZE);
+    size_t log_sigma = log_universe(ALPHABET_SIZE);
 
     template<typename root_type>
     void build_CoCo_from_uncompacted_trie(root_type root) {
@@ -178,7 +178,11 @@ public:
         assert(internal_variable->size() > 0);
     }
 
-    CoCo_v2(std::vector<std::string> &dataset, size_t l_fixed = 0) {
+    CoCo_v2(std::istream &in) {
+        load(in);
+    };
+
+    CoCo_v2(const std::vector<std::string> &dataset, size_t l_fixed = 0) {
         utrie_t uncompacted;
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
@@ -345,4 +349,42 @@ public:
         return to_return;
     }
 
+
+    size_t serialize(std::ostream &out) {
+        size_t to_return = 0;
+        out.write(reinterpret_cast<const char *>(&num_child_root), sizeof(size_t));
+        out.write(reinterpret_cast<const char *>(&bits_for_L), sizeof(size_t));
+        out.write(reinterpret_cast<const char *>(&log_sigma), sizeof(size_t));
+        to_return += (3 * sizeof(size_t));
+
+        to_return += pointers_to_encoding->serialize(out);
+        to_return += topology->bv.serialize(out);
+        to_return += internal_variable->serialize(out);
+
+        return to_return;
+    }
+
+    void load(std::istream &in) {
+        size_t tmp;
+        in.read((char *) &tmp, sizeof(size_t));
+        num_child_root = tmp;
+
+        in.read((char *) &tmp, sizeof(size_t));
+        bits_for_L = tmp;
+
+        in.read((char *) &tmp, sizeof(size_t));
+        log_sigma = tmp;
+
+        sdsl::int_vector<> tmp_int_vector;
+        tmp_int_vector.load(in);
+        pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(tmp_int_vector);
+
+        sdsl::bit_vector tmp_louds_bv;
+        tmp_louds_bv.load(in);
+        assert(tmp_louds_bv.size() != 0);
+        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(tmp_louds_bv);
+
+        succinct::bit_vector_builder bvb(in);
+        internal_variable = std::make_unique<succinct::bit_vector>(&bvb);
+    }
 };
