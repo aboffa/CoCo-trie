@@ -166,6 +166,9 @@ struct datasetStats {
             }
         }
         std::cout << "- num_chars: " << num_chars << std::endl << std::flush;
+        std::cout << "- space on disk (byte) (MB): "
+                  << (num_chars + num_strings) << " "
+                  << double(num_chars + num_strings) / double(1000000)<< std::endl;
     }
 
     size_t get_alphabet_size() const {
@@ -179,7 +182,8 @@ struct datasetStats {
     }
 };
 
-bool checkIsPrintable(std::string &s) {
+template<typename string>
+bool checkIsPrintable(string s) {
     for (char c: s) {
         if (!isprint(c)) {
             return false;
@@ -241,21 +245,21 @@ std::string from_enum_to_string(node_type nt) {
 
 datasetStats dataset_stats_from_vector(std::vector<std::string> const &strings) {
     datasetStats ds;
-    for (std::string line: strings) {
-        if (!line.empty() and checkIsPrintable(line)) {
-            if (!strings.empty()) {
-                ds.average_lcp += static_cast<double>(lcp(strings.back(), line));
+    for (auto i = 0; i < strings.size(); i++) {
+        if (!strings[i].empty() and checkIsPrintable(strings[i])) {
+            if (i > 0) {
+                ds.average_lcp += static_cast<double>(lcp(strings[i], strings[i - 1]));
             }
-            ds.num_chars += line.size();
-            for (auto c: line) {
+            ds.num_chars += strings[i].size();
+            for (auto c: strings[i]) {
                 if (ds.chars.find(c) == ds.chars.end())
                     ds.chars[c] = 1;
                 else
                     ds.chars[c]++;
             }
-            ds.average_length += static_cast<double>(line.size());
-            ds.max_size = std::max(line.size(), ds.max_size);
-            ds.min_size = std::min(line.size(), ds.min_size);
+            ds.average_length += static_cast<double>(strings[i].size());
+            ds.max_size = std::max(strings[i].size(), ds.max_size);
+            ds.min_size = std::min(strings[i].size(), ds.min_size);
         }
     }
     assert(!strings.empty());
