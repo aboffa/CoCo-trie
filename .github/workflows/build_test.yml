@@ -10,8 +10,8 @@ on:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  CC:   gcc-10
-  CXX:  g++-10
+  CC: gcc-10
+  CXX: g++-10
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -81,3 +81,8 @@ jobs:
         run: |
           ./tests_entire_trie_128_small_alphabet
           ./tests_entire_trie_128_big_alphabet
+
+      - name: Test serialize and load
+        working-directory: ${{runner.workspace}}/build/test
+        shell: bash
+        run: ./tests_serialize_load
