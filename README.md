@@ -14,10 +14,13 @@ CoCo-trie compresses and collapses subtrees in a principled and effective  way.
 
 It hinges upon a data-aware optimisation scheme that selects the best subtries to collapse based on a pool of succinct encoding schemes in order to minimise the overall space occupancy.
 
-An introduction to the string dictionary problem, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the paper: [(DOI)](https://link.springer.com/chapter/10.1007/978-3-031-20643-6_17) [(PDF)](https://pages.di.unipi.it/boffa/files/SPIRE.pdf)
+An introduction to the string dictionary problem, a motivating example, a detailed description of CoCo-trie with proof about the space and time complexity, and experiments against well-established and highly-engineered trie-based string dictionaries are in the paper: [(DOI)](https://doi.org/10.1016/j.is.2023.102316) [(PDF)](https://pages.di.unipi.it/boffa/files/IS.pdf)
 
->  Boffa, A., Ferragina, P., Tosoni, F., Vinciguerra, G. (2022). Compressed String Dictionaries via Data-Aware Subtrie Compaction. In: Arroyuelo, D., Poblete, B. (eds) String Processing and Information Retrieval. SPIRE 2022. Lecture Notes in Computer Science, vol 13617. Springer, Cham. https://doi.org/10.1007/978-3-031-20643-6_17
+>  Antonio Boffa, Paolo Ferragina, Francesco Tosoni, and Giorgio Vinciguerra. CoCo-trie: Data-aware compression and indexing of strings.  In: Information Systems 120 (2024), p. 102316 [https://doi.org/10.1016/j.is.2023.102316](https://doi.org/10.1016/j.is.2023.102316)
 
+Preliminary results appeared in the paper: [(DOI)](https://doi.org/10.1007/978-3-031-20643-6_17) [(PDF)](https://pages.di.unipi.it/boffa/files/SPIRE.pdf)
+
+>  Boffa, A., Ferragina, P., Tosoni, F., Vinciguerra, G. (2022). Compressed String Dictionaries via Data-Aware Subtrie Compaction. In: Arroyuelo, D., Poblete, B. (eds) String Processing and Information Retrieval. SPIRE 2022. Lecture Notes in Computer Science, vol 13617. Springer, Cham. [https://doi.org/10.1007/978-3-031-20643-6_17](https://doi.org/10.1007/978-3-031-20643-6_17)
 
 ## Build the project 🔧
 
@@ -106,17 +109,17 @@ This project is released for academic purposes under the terms of the GNU Genera
 Please, cite the paper:
 
 ```tex
-@InProceedings{Boffa2022spire,
-    author="Boffa, Antonio and Ferragina, Paolo and Tosoni, Francesco and Vinciguerra, Giorgio",
-    editor="Arroyuelo, Diego
-    and Poblete, Barbara",
-    title="Compressed String Dictionaries via Data-Aware Subtrie Compaction",
-    booktitle="String Processing and Information Retrieval",
-    year="2022",
-    publisher="Springer International Publishing",
-    address="Cham",
-    pages="233--249",
-    abstract="String dictionaries are a core component of a plethora of applications, so it is not surprising that they have been widely and deeply investigated in the literature since the introduction of tries in the '60s.",
-    isbn="978-3-031-20643-6"
+@article{Boffa:2024IS,
+title = {CoCo-trie: Data-aware compression and indexing of strings},
+journal = {Information Systems},
+volume = {120},
+pages = {102316},
+year = {2024},
+issn = {0306-4379},
+doi = {https://doi.org/10.1016/j.is.2023.102316},
+url = {https://www.sciencedirect.com/science/article/pii/S0306437923001527},
+author = {Antonio Boffa and Paolo Ferragina and Francesco Tosoni and Giorgio Vinciguerra},
+keywords = {String dictionaries, Tries, Data compression, Succinct data structures, Key-value stores},
+abstract = {We address the problem of compressing and indexing a sorted dictionary of strings to support efficient lookups and more sophisticated operations, such as prefix, predecessor, and range searches. This problem occurs as a key task in a plethora of applications, and thus it has been deeply investigated in the literature since the introduction of tries in the ’60s. We introduce a new data structure, called the COmpressed COllapsed Trie (CoCo-trie), that hinges on a pool of techniques to compress subtries (of arbitrary depth) into succinctly-encoded and efficiently-searchable trie macro-nodes with a possibly large fan-out. Then, we observe that the choice of the subtries to compress depends on the trie structure and its edge labels. Hence, we develop a data-aware optimisation approach that selects the best subtries to compress via the above pool of succinct encodings, with the overall goal of minimising the total space occupancy and still achieving efficient query time. We also investigate some variants of this approach that induce interesting space–time trade-offs in the CoCo-trie design. Our experimental evaluation on six diverse and large datasets (representing URLs, XML data, DNA and protein sequences, database records, and search-engine dictionaries) shows that the space–time performance of well-established and highly-engineered data structures solving this problem is very input-sensitive. Conversely, our CoCo-trie provides a robust and uniform improvement over all competitors for half of the datasets, and it results on the Pareto space–time frontier for the others, thus offering new competitive trade-offs.}
 }
 ```
