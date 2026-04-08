@@ -1,0 +1,92 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: 'CoCo-trie'
+message: >
+  If you use this software, please cite the paper from Information Systems (2024) 
+  as specified in preferred-citation. 
+  You may also cite the earlier conference version from SPIRE 2022.
+type: software
+authors:
+  - given-names: Antonio
+    family-names: Boffa
+    email: antonio.boffa@phd.unipi.it
+    affiliation: >
+      Department of Computer Science, University of Pisa,
+      Pisa, Italy
+    orcid: 'https://orcid.org/0000-0002-8178-135X'
+  - given-names: Paolo
+    family-names: Ferragina
+    email: paolo.ferragina@unipi.it
+    affiliation: >
+      Department of Computer Science, University of Pisa,
+      Pisa, Italy
+    orcid: 'https://orcid.org/0000-0003-1353-360X'
+  - given-names: Francesco
+    family-names: Tosoni
+    email: francesco.tosoni@phd.unipi.it
+    affiliation: >
+      Department of Computer Science, University of Pisa,
+      Pisa, Italy
+    orcid: 'https://orcid.org/0000-0001-8457-3866'
+  - given-names: Giorgio
+    family-names: Vinciguerra
+    email: giorgio.vinciguerra@di.unipi.it
+    affiliation: >
+      Department of Computer Science, University of Pisa,
+      Pisa, Italy
+    orcid: 'https://orcid.org/0000-0003-0328-7791'
+
+preferred-citation:
+  type: article
+  authors:
+    - given-names: Antonio
+      family-names: Boffa
+    - given-names: Paolo
+      family-names: Ferragina
+    - given-names: Francesco
+      family-names: Tosoni
+    - given-names: Giorgio
+      family-names: Vinciguerra
+  title: 'CoCo-trie: Data-aware compression and indexing of strings'
+  year: 2024
+  journal: 'Information Systems'
+  volume: 120
+  start: 102316
+  doi: '10.1016/j.is.2023.102316'
+  publisher:
+    name: 'Elsevier'
+
+alternative-citations:
+  - type: conference-paper
+    authors:
+      - given-names: Antonio
+        family-names: Boffa
+      - given-names: Paolo
+        family-names: Ferragina
+      - given-names: Francesco
+        family-names: Tosoni
+      - given-names: Giorgio
+        family-names: Vinciguerra
+    title: 'Compressed String Dictionaries via Data-Aware Subtrie Compaction'
+    year: 2022
+    collection-title: 'String Processing and Information Retrieval: 29th International Symposium, SPIRE 2022, Proceedings'
+    conference:
+      name: 'SPIRE 2022'
+    start: 233
+    end: 249
+    doi: '10.1007/978-3-031-20643-6_17'
+    publisher:
+      name: 'Springer International Publishing'
+
+repository-code: 'https://github.com/aboffa/CoCo-trie'
+abstract: >
+  COllapsed and COmpressed trie: a data-aware compressed string dictionary.
+keywords:
+  - String dictionaries
+  - Tries
+  - Data compression
+  - Succinct data structures
+  - Key-value stores
+license: GPL-3.0
