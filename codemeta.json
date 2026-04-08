@@ -3,7 +3,7 @@
     "type": "SoftwareSourceCode",
     "name": "CoCo-trie",
     "description": "COllapsed and COmpressed trie: a data-aware compressed string dictionary.",
-    "applicationCategory": "String data structures design and analysis",
+    "applicationCategory": "Data structures",
     "author": [
         {
             "id": "http://orcid.org/0000-0002-8178-135X",
@@ -51,6 +51,10 @@
         }
     ],
     "codeRepository": "git+https://github.com/aboffa/CoCo-trie.git",
+    "softwareVersion": "Snapshot as of 8th April 2026",
+    "version": "Snapshot as of 8th April 2026",
+    "identifier": "swh:1:dir:7877831ae68867050ed98f4840b88150c58586eb;origin=https://github.com/aboffa/CoCo-trie;visit=swh:1:snp:378b5a4a079a457500e3921de916b631e1d8b86c;anchor=swh:1:rev:8bc71d57235c22f7033f86bef5f3427bd82e2d29",
+    "dateCreated": "2026-04-08",
     "datePublished": "2024",
     "keywords": [
         "String dictionaries",
@@ -117,31 +121,31 @@
             "author": [
                 {
                     "@type": "Person",
-                    "id": "http://orcid.org/0000-0002-8178-135X",
+                    "id": "https://orcid.org/0000-0002-8178-135X",
                     "familyName": "Boffa",
                     "givenName": "Antonio"
                 },
                 {
                     "@type": "Person",
-                    "id": "http://orcid.org/0000-0003-1353-360X",
+                    "id": "https://orcid.org/0000-0003-1353-360X",
                     "familyName": "Ferragina",
                     "givenName": "Paolo"
                 },
                 {
                     "@type": "Person",
-                    "id": "http://orcid.org/0000-0001-8457-3866",
+                    "id": "https://orcid.org/0000-0001-8457-3866",
                     "familyName": "Tosoni",
                     "givenName": "Francesco"
                 },
                 {
                     "@type": "Person",
-                    "id": "http://orcid.org/0000-0003-0328-7791",
+                    "id": "https://orcid.org/0000-0003-0328-7791",
                     "familyName": "Vinciguerra",
                     "givenName": "Giorgio"
                 }
             ],
             "isPartOf": {
-                "@type": "PublicationEvent",
+                "@type": "ConferenceProceedings",
                 "name": "String Processing and Information Retrieval: 29th International Symposium, SPIRE 2022, Proceedings"
             },
             "publisher": {
