@@ -5,6 +5,7 @@
 # CoCo-trie
 
 [![build_test](https://github.com/aboffa/CoCo-trie/actions/workflows/build_test.yml/badge.svg)](https://github.com/aboffa/CoCo-trie/actions/workflows/build_test.yml)
+[![SWH](https://archive.softwareheritage.org/badge/swh:1:dir:7877831ae68867050ed98f4840b88150c58586eb/)](https://archive.softwareheritage.org/swh:1:dir:7877831ae68867050ed98f4840b88150c58586eb;origin=https://github.com/aboffa/CoCo-trie;visit=swh:1:snp:378b5a4a079a457500e3921de916b631e1d8b86c;anchor=swh:1:rev:8bc71d57235c22f7033f86bef5f3427bd82e2d29)
 
 ## What is it? 📣
 

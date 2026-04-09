@@ -1,0 +1,161 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "type": "SoftwareSourceCode",
+    "name": "CoCo-trie",
+    "description": "COllapsed and COmpressed trie: a data-aware compressed string dictionary.",
+    "applicationCategory": "Data structures",
+    "author": [
+        {
+            "id": "http://orcid.org/0000-0002-8178-135X",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Department of Computer Science, University of Pisa, Pisa, Italy"
+            },
+            "email": "antonio.boffa@phd.unipi.it",
+            "familyName": "Boffa",
+            "givenName": "Antonio"
+        },
+        {
+            "id": "http://orcid.org/0000-0003-1353-360X",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Department of Computer Science, University of Pisa, Pisa, Italy"
+            },
+            "email": "paolo.ferragina@unipi.it",
+            "familyName": "Ferragina",
+            "givenName": "Paolo"
+        },
+        {
+            "id": "http://orcid.org/0000-0001-8457-3866",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Department of Computer Science, University of Pisa, Pisa, Italy"
+            },
+            "email": "francesco.tosoni@phd.unipi.it",
+            "familyName": "Tosoni",
+            "givenName": "Francesco"
+        },
+        {
+            "id": "http://orcid.org/0000-0003-0328-7791",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Department of Computer Science, University of Pisa, Pisa, Italy"
+            },
+            "email": "giorgio.vinciguerra@di.unipi.it",
+            "familyName": "Vinciguerra",
+            "givenName": "Giorgio"
+        }
+    ],
+    "codeRepository": "git+https://github.com/aboffa/CoCo-trie.git",
+    "softwareVersion": "Snapshot as of 8th April 2026",
+    "version": "Snapshot as of 8th April 2026",
+    "identifier": "swh:1:dir:7877831ae68867050ed98f4840b88150c58586eb;origin=https://github.com/aboffa/CoCo-trie;visit=swh:1:snp:378b5a4a079a457500e3921de916b631e1d8b86c;anchor=swh:1:rev:8bc71d57235c22f7033f86bef5f3427bd82e2d29",
+    "dateCreated": "2026-04-08",
+    "datePublished": "2024",
+    "keywords": [
+        "String dictionaries",
+        "Tries",
+        "Data compression",
+        "Succinct data structures",
+        "Key-value stores"
+    ],
+    "license": "GPL-3.0",
+    "programmingLanguage": "C++",
+    "developmentStatus": "active",
+    "issueTracker": "https://github.com/aboffa/CoCo-trie/issues",
+    "referencePublication": "https://doi.org/10.1016/j.is.2023.102316",
+    "citation": [
+        {
+            "@type": "ScholarlyArticle",
+            "@id": "https://doi.org/10.1016/j.is.2023.102316",
+            "name": "CoCo-trie: Data-aware compression and indexing of strings",
+            "datePublished": "2024",
+            "author": [
+                {
+                    "@type": "Person",
+                    "id": "http://orcid.org/0000-0002-8178-135X",
+                    "familyName": "Boffa",
+                    "givenName": "Antonio"
+                },
+                {
+                    "@type": "Person",
+                    "id": "http://orcid.org/0000-0003-1353-360X",
+                    "familyName": "Ferragina",
+                    "givenName": "Paolo"
+                },
+                {
+                    "@type": "Person",
+                    "id": "http://orcid.org/0000-0001-8457-3866",
+                    "familyName": "Tosoni",
+                    "givenName": "Francesco"
+                },
+                {
+                    "@type": "Person",
+                    "id": "http://orcid.org/0000-0003-0328-7791",
+                    "familyName": "Vinciguerra",
+                    "givenName": "Giorgio"
+                }
+            ],
+            "isPartOf": {
+                "@type": "PublicationVolume",
+                "name": "Information Systems",
+                "volumeNumber": "120"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Elsevier"
+            },
+            "pageStart": "102316",
+            "identifier": "10.1016/j.is.2023.102316",
+            "url": "https://www.sciencedirect.com/science/article/pii/S0306437923001527"
+        },
+        {
+            "@type": "ScholarlyArticle",
+            "@id": "https://doi.org/10.1007/978-3-031-20643-6_17",
+            "name": "Compressed String Dictionaries via Data-Aware Subtrie Compaction",
+            "datePublished": "2022",
+            "author": [
+                {
+                    "@type": "Person",
+                    "id": "https://orcid.org/0000-0002-8178-135X",
+                    "familyName": "Boffa",
+                    "givenName": "Antonio"
+                },
+                {
+                    "@type": "Person",
+                    "id": "https://orcid.org/0000-0003-1353-360X",
+                    "familyName": "Ferragina",
+                    "givenName": "Paolo"
+                },
+                {
+                    "@type": "Person",
+                    "id": "https://orcid.org/0000-0001-8457-3866",
+                    "familyName": "Tosoni",
+                    "givenName": "Francesco"
+                },
+                {
+                    "@type": "Person",
+                    "id": "https://orcid.org/0000-0003-0328-7791",
+                    "familyName": "Vinciguerra",
+                    "givenName": "Giorgio"
+                }
+            ],
+            "isPartOf": {
+                "@type": "ConferenceProceedings",
+                "name": "String Processing and Information Retrieval: 29th International Symposium, SPIRE 2022, Proceedings"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Springer International Publishing"
+            },
+            "pageStart": "233",
+            "pageEnd": "249",
+            "identifier": "10.1007/978-3-031-20643-6_17",
+            "url": "https://doi.org/10.1007/978-3-031-20643-6_17"
+        }
+    ]
+}
