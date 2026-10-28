@@ -41,13 +41,15 @@ template<uint8_t MIN_L = 1,
         uint8_t space_relaxation = 0,
         typename rank1_type = sdsl::rank_support_v<1>,
         typename rank00_type = sdsl::rank_support_v<0, 2>,
-        typename select0_type = sux::bits::SimpleSelectZero<>>
+        typename select0_type = sux::bits::SimpleSelectZero<>,
+        typename Bitmap = code_type>
 class CoCo_v1 {
     alphabet_config alphabet_;
     bool root_terminal_ = false;
 public:
+    using alphamap = basic_alphamap<Bitmap>;
     const alphabet_config& alphabet() const { return alphabet_; }
-    using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
+    using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation, Bitmap>;
 
     std::unique_ptr<succinct::bit_vector> internal_variable;
 
@@ -170,7 +172,7 @@ public:
             while (n > linear_threshold) {
                 size_t half = n / 2;
                 it.move(start_pos + ((base + half) * logu));
-                code_type mid_val = it.take128(logu);
+                code_type mid_val = it.template take_code<code_type>(logu);
                 if (mid_val == to_search) [[unlikely]]
                     return base + half + 2;
                 base = (mid_val < to_search) ? base + half : base;
@@ -178,19 +180,19 @@ public:
             }
             it.move(start_pos + (base * logu));
             read_code_idx = base;
-            read_code = it.take128(logu);
+            read_code = it.template take_code<code_type>(logu);
             // find index of GEQ
             while (to_search > read_code and read_code_idx < (base + n - 1)) {
                 read_code_idx++;
-                read_code = it.take128(logu);
+                read_code = it.template take_code<code_type>(logu);
             }
         }// End binary search
         else {
-            read_code = it.take128(logu);
+            read_code = it.template take_code<code_type>(logu);
             // find index of GEQ
             while (to_search > read_code and read_code_idx < n - 1) {
                 read_code_idx++;
-                read_code = it.take128(logu);
+                read_code = it.template take_code<code_type>(logu);
             }
         }
         return (to_search == read_code) ? read_code_idx + 2 : -1;
@@ -229,7 +231,7 @@ public:
                         is_first = false;
                         if (is_remapped) {
                             first_code = utrie_t::enc_real(child_string, node->l_idx, node->alphamaps[node->l_idx], alphabet_);
-                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, alphabet_.size);
+                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, alphabet_.bitmap_bits(alphamap::width));
                             size_t bfc = bits_first_code<MIN_L, code_type>(
                                     node->alphamaps[node->l_idx].rankmax(), node->l_idx);
                             bvb.append_bits(first_code, bfc);
@@ -320,7 +322,7 @@ public:
         assert(internal_variable->size() > 0);
     }
 
-    CoCo_v1(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset)) {
+    CoCo_v1(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset, alphamap::width)) {
         utrie_t uncompacted(alphabet_);
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
@@ -378,11 +380,11 @@ public:
             const bool is_remapped = (nt >= elias_fano_amap);
             code_type first_code = 0;
             code_type to_search_code = 0;
-            uint128_t alphamap_uint128 = 0;
+            Bitmap alphamap_uint128 = 0;
             substr = to_search_view.substr(scanned_chars, l + MIN_L);
             if (!alphabet_.contains(substr)) return size_t(-1);
             if (is_remapped) { // remap
-                alphamap_uint128 = it.take128(alphabet_.size);
+                alphamap_uint128 = it.template take_code<Bitmap>(alphabet_.bitmap_bits(alphamap::width));
                 assert(alphamap_uint128 != 0);
                 alphamap am(alphamap_uint128);
                 // check if all the characters in the wanted string are in the subtrie rooted in the current node
@@ -390,10 +392,10 @@ public:
                     return -1;
                 }
                 size_t bits_first_code_local_as = bits_first_code<MIN_L, code_type>(am.rankmax(), l);
-                first_code = it.take128(bits_first_code_local_as);
+                first_code = it.template take_code<code_type>(bits_first_code_local_as);
                 to_search_code = utrie_t::enc_real(substr, l, am, alphabet_);
             } else { // no remap
-                first_code = it.take128(log_sigma * (l + MIN_L));
+                first_code = it.template take_code<code_type>(log_sigma * (l + MIN_L));
                 to_search_code = utrie_t::enc(substr, l, alphabet_);
             }
             assert(first_code != code_type(0));

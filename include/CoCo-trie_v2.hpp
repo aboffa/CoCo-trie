@@ -28,14 +28,16 @@ template<uint8_t MIN_L = 1,
         uint8_t space_relaxation = 0, // in percentage
         typename rank1_type = sdsl::rank_support_v<1>,
         typename rank00_type = sdsl::rank_support_v<0, 2>,
-        typename select0_type = sux::bits::SimpleSelectZero<>>
+        typename select0_type = sux::bits::SimpleSelectZero<>,
+        typename Bitmap = code_type>
 class CoCo_v2 {
     alphabet_config alphabet_;
     bool root_terminal_ = false;
 public:
+    using alphamap = basic_alphamap<Bitmap>;
     const alphabet_config& alphabet() const { return alphabet_; }
-    using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
-    using CoCo_v1_t = CoCo_v1<MIN_L, code_type, MAX_L_THRS, space_relaxation, rank1_type, rank00_type, select0_type>;
+    using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation, Bitmap>;
+    using CoCo_v1_t = CoCo_v1<MIN_L, code_type, MAX_L_THRS, space_relaxation, rank1_type, rank00_type, select0_type, Bitmap>;
 
     std::unique_ptr<succinct::bit_vector> internal_variable;
 
@@ -91,7 +93,7 @@ public:
                             first_code = utrie_t::enc_real(child_string,
                                                            node->l_idx,
                                                            node->alphamaps[node->l_idx], alphabet_);
-                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, alphabet_.size);
+                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, alphabet_.bitmap_bits(alphamap::width));
                             size_t bit_first_code_val = bits_first_code<MIN_L, code_type>(
                                     node->alphamaps[node->l_idx].rankmax(),
                                     node->l_idx);
@@ -189,7 +191,7 @@ public:
         load(in);
     };
 
-    using sorted_builder_type = sorted_trie_builder<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
+    using sorted_builder_type = sorted_trie_builder<MIN_L, code_type, MAX_L_THRS, space_relaxation, Bitmap>;
 
     CoCo_v2(coco_sorted_unique_t, const std::vector<std::string>& keys, size_t l_fixed = 0)
         : CoCo_v2(sorted_builder_type(keys, l_fixed)) {}
@@ -206,7 +208,7 @@ public:
     }
 
 
-    CoCo_v2(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset)) {
+    CoCo_v2(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset, alphamap::width)) {
         utrie_t uncompacted(alphabet_);
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
@@ -263,11 +265,11 @@ public:
             const bool is_remapped = (nt >= elias_fano_amap);
             code_type first_code = 0;
             code_type to_search_code = 0;
-            uint128_t alphamap_uint128 = 0;
+            Bitmap alphamap_uint128 = 0;
             substr = to_search_view.substr(scanned_chars, std::min(l + MIN_L, to_search_view.size()));
             if (!alphabet_.contains(substr)) return size_t(-1);
             if (is_remapped) { // remap
-                alphamap_uint128 = it.take128(alphabet_.size);
+                alphamap_uint128 = it.template take_code<Bitmap>(alphabet_.bitmap_bits(alphamap::width));
                 assert(alphamap_uint128 != 0);
                 alphamap am(alphamap_uint128);
                 // check if all the characters in the wanted string are in the subtrie rooted in the current node
@@ -275,10 +277,10 @@ public:
                     return -1;
                 }
                 size_t bits_first_code_local_as = bits_first_code<MIN_L, code_type>(am.rankmax(), l);
-                first_code = it.take128(bits_first_code_local_as);
+                first_code = it.template take_code<code_type>(bits_first_code_local_as);
                 to_search_code = utrie_t::enc_real(substr, l, am, alphabet_);
             } else { // no remap
-                first_code = it.take128(log_sigma * (l + MIN_L));
+                first_code = it.template take_code<code_type>(log_sigma * (l + MIN_L));
                 to_search_code = utrie_t::enc(substr, l, alphabet_);
             }
             assert(first_code != code_type(0));
@@ -384,13 +386,17 @@ public:
 
     // Versioned header; the succinct payload remains native-endian.
     size_t serialize(std::ostream &out) const {
-        constexpr char magic[8] = {'C', 'O', 'C', 'O', 'T', 'R', '2', '\0'};
+        // Keep the v2 representation for existing 128-bit alphabet maps.
+        const bool extended = sizeof(Bitmap) != 16 || alphabet_.size > 255;
+        const char magic[8] = {'C', 'O', 'C', 'O', 'T', 'R', char(extended ? '3' : '2'), '\0'};
         const uint8_t metadata[] = {MIN_L, sizeof(code_type),
             static_cast<uint8_t>(alphabet_.min_char), static_cast<uint8_t>(alphabet_.size),
-            static_cast<uint8_t>((topology ? 1 : 0) | (root_terminal_ ? 2 : 0)), sizeof(size_t)};
+            static_cast<uint8_t>((topology ? 1 : 0) | (root_terminal_ ? 2 : 0)), sizeof(size_t),
+            static_cast<uint8_t>(alphabet_.size >> 8), sizeof(Bitmap)};
+        const size_t metadata_size = extended ? 8 : 6;
         out.write(magic, sizeof(magic));
-        out.write(reinterpret_cast<const char*>(metadata), sizeof(metadata));
-        size_t to_return = sizeof(magic) + sizeof(metadata);
+        out.write(reinterpret_cast<const char*>(metadata), metadata_size);
+        size_t to_return = sizeof(magic) + metadata_size;
         if (topology) {
             out.write(reinterpret_cast<const char *>(&num_child_root), sizeof(size_t));
             out.write(reinterpret_cast<const char *>(&bits_for_L), sizeof(size_t));
@@ -405,18 +411,19 @@ public:
     }
 
     void load(std::istream &in) {
-        constexpr char magic[8] = {'C', 'O', 'C', 'O', 'T', 'R', '2', '\0'};
-        char actual_magic[8] = {};
-        uint8_t metadata[6] = {};
-        in.read(actual_magic, sizeof(actual_magic));
-        if (!in || std::memcmp(magic, actual_magic, sizeof(magic)) != 0)
+        char magic[8] = {};
+        uint8_t metadata[8] = {};
+        in.read(magic, sizeof(magic));
+        if (!in || std::memcmp(magic, "COCOTR", 6) || (magic[6] != '2' && magic[6] != '3') || magic[7])
             throw std::runtime_error("Invalid or legacy CoCo-trie file; rebuild with the versioned format");
-        in.read(reinterpret_cast<char*>(metadata), sizeof(metadata));
+        const bool extended = magic[6] == '3';
+        in.read(reinterpret_cast<char*>(metadata), extended ? 8 : 6);
         if (!in || metadata[0] != MIN_L || metadata[1] != sizeof(code_type) ||
-            metadata[4] > 3 || metadata[5] != sizeof(size_t))
+            metadata[4] > 3 || metadata[5] != sizeof(size_t) ||
+            (extended ? metadata[7] != sizeof(Bitmap) : sizeof(Bitmap) != 16))
             throw std::runtime_error("Incompatible CoCo-trie header");
-        alphabet_config alphabet{char(metadata[2]), metadata[3]};
-        alphabet.validate();
+        alphabet_config alphabet{char(metadata[2]), size_t(metadata[3]) + (size_t(metadata[6]) << 8)};
+        alphabet.validate(alphamap::width);
         const bool has_topology = metadata[4] & 1;
         const bool root_terminal = metadata[4] & 2;
         if (!has_topology) {

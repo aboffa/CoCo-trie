@@ -136,7 +136,7 @@ namespace succinct {
             return intrinsics::bsr128(&ret, x);
         }
 
-#if defined(__clang__)
+#ifdef COCO_HAS_UINT256
         inline uint8_t msb(uint256_t x, unsigned long &ret) {
             return intrinsics::bsr256(&ret, x);
         }
@@ -147,7 +147,7 @@ namespace succinct {
             msb(x, ret);
             return (uint8_t) ret;
         }
-#if defined(__clang__)
+#ifdef COCO_HAS_UINT256
         inline uint8_t msb(uint256_t x) {
             assert(x);
             unsigned long ret = -1U;

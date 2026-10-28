@@ -1,5 +1,7 @@
 # `_BitInt(256)` experiment
 
+These are historical measurements. Wide integers and parametric alphabet maps are now integrated into the production headers; see the root README. The staging script preserves the experiments' 128-bit alphabet map. The fixed-jump experiments below remain a separate construction policy and must not be confused with the normal optimizer or the new paper variants.
+
 Measured on an Intel Core i7-13620H under a Microsoft hypervisor, pinned to logical CPU 0, using Clang 21.1.8 and `-O3 -DNDEBUG -march=native -std=gnu++20`. The base repository commit is `90c1856`. This is an experimental adapter and benchmark, not a change to the default trie type.
 
 The built-in 256-bit type is substantially faster than Boost's fixed-width `uint256_t` for addition, multiplication, and radix encoding. Division is the exception: the compiler's 256-bit division is much slower than both Boost and native 128-bit division. Clang 23 also exhibited the division bottleneck in a supplementary run.

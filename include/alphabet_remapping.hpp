@@ -16,56 +16,45 @@
 
 #pragma once
 
+// Bitmap and integer-code widths are independent template parameters.
+template<class Bitmap = unsigned __int128>
 struct alphamap {
-    typedef unsigned __int128 uint128_t;
-    uint128_t bitmap;
+    using bitmap_type = Bitmap;
+    static constexpr size_t width = sizeof(Bitmap) * CHAR_BIT;
+    static_assert(width <= 256 && width >= 64);
+    static_assert((Bitmap(-1) >> (width - 1)) == Bitmap(1),
+                  "Bitmap must be an unsigned integer filling its storage width");
+    Bitmap bitmap = 0;
 
-    alphamap() : bitmap(0) {}
-
-    alphamap(uint128_t _bitmap) : bitmap(_bitmap) {}
-
-    inline void set_or_bitwise(alphamap &other) {
-        this->bitmap |= other.bitmap;
+    alphamap() = default;
+    alphamap(Bitmap value) : bitmap(value) {}
+    void set_or_bitwise(const alphamap& other) { bitmap |= other.bitmap; }
+    template<bool b> void set_bit(size_t pos) {
+        if (pos >= width) throw std::out_of_range("alphabet bitmap position");
+        if constexpr (b) bitmap |= Bitmap(1) << pos;
+        else bitmap &= ~(Bitmap(1) << pos);
     }
-
-    template<bool b>
-    inline void set_bit(size_t pos) {
-        if (pos >= 128) throw std::out_of_range("alphabet bitmap position");
-        if constexpr(b == 1)
-            this->bitmap |= (uint128_t(1) << pos);
-        else
-            this->bitmap &= ~(uint128_t(1) << pos);
+    size_t get_bit(size_t pos) const { return pos < width ? size_t((bitmap >> pos) & 1) : 0; }
+    static size_t popcount(Bitmap value) {
+        size_t result = 0;
+        for (size_t i = 0; i < width; i += 64) result += std::popcount(uint64_t(value >> i));
+        return result;
     }
-
-
-    void test_correctness() {
-        for (auto i = 1; i < 127; ++i) {
-            assert(rank(i - 1) <= rank(i));
-        }
+    size_t rank(size_t pos) const {
+        return pos >= width ? rankmax() : popcount(bitmap & ((Bitmap(1) << pos) - 1));
     }
-
-    inline size_t get_bit(size_t pos) const {
-        return pos < 128 ? (uint8_t) ((this->bitmap >> pos) & 0x1) : 0;
+    size_t rankmax() const { return popcount(bitmap); }
+    void test_correctness() const {
+        for (size_t i = 1; i <= width; ++i) assert(rank(i - 1) <= rank(i));
     }
-
-    // returns the number of 1 in [0,pos)
-    inline size_t rank(size_t pos) const {
-        if (pos >= 128) return rankmax();
-        uint128_t mask = (uint128_t(1) << pos) - 1;
-        return std::popcount(bitmap & mask);
-    }
-
-    inline size_t rankmax() const {
-        return std::popcount(bitmap);
-    }
-
     bool check_chars(std::string_view s, char min_char = MIN_CHAR) const {
-        for (auto c: s) {
-            if ((get_bit(int(static_cast<unsigned char>(c)) - int(static_cast<unsigned char>(min_char)))) == 0) {
-                return false;
-            }
-        }
+        for (unsigned char c : s)
+            if (!get_bit(int(c) - int(static_cast<unsigned char>(min_char)))) return false;
         return true;
     }
+};
 
-};// end class alphamap
+// Preserve ordinary default construction (`alphamap map;`).
+alphamap(int) -> alphamap<>;
+template<class Bitmap = unsigned __int128>
+using basic_alphamap = alphamap<Bitmap>;

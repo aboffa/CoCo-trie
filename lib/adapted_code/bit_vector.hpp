@@ -109,6 +109,16 @@ namespace succinct {
             }
         }
 
+#ifdef COCO_HAS_UINT256
+        inline void append_bits(uint256_t bits, size_t len) {
+            assert(len <= 256);
+            if (len > 128) {
+                append_bits(uint128_t(bits >> 128), len - 128);
+                append_bits(uint128_t(bits), 128);
+            } else append_bits(uint128_t(bits), len);
+        }
+#endif
+
         inline void zero_extend(uint64_t n) {
             m_size += n;
             uint64_t needed = detail::words_for(m_size) - m_bits.size();
@@ -423,6 +433,17 @@ namespace succinct {
                     return (hi << 64) | lo;
                 } else {
                     return uint128_t(take(l));
+                }
+            }
+
+            template<class T>
+            inline T take_code(size_t len) {
+                assert(len <= sizeof(T) * 8);
+                if constexpr (sizeof(T) <= 16) return T(take128(len));
+                else {
+                    if (len <= 128) return T(take128(len));
+                    T high = T(take128(len - 128));
+                    return (high << 128) | T(take128(128));
                 }
             }
 

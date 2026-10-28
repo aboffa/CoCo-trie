@@ -111,7 +111,7 @@ TEST_CASE("Alphabet bitmap safely handles out of range positions") {
     REQUIRE_FALSE(map.check_chars("A", 'a'));
     REQUIRE_FALSE(map.check_chars(std::string(1, char(255)), 'a'));
     REQUIRE_THROWS_AS(map.set_bit<1>(128), std::out_of_range);
-    REQUIRE_THROWS_AS(CoCo_v2<>(std::vector<std::string>{std::string(1, char(255))}), std::invalid_argument);
+    REQUIRE_THROWS_AS(CoCo_v2<>(std::vector<std::string>{std::string(1, char(0)), std::string(1, char(255))}), std::invalid_argument);
 }
 
 TEST_CASE("Serialization preserves configuration and empty dictionaries") {

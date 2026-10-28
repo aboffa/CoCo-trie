@@ -74,16 +74,17 @@ inline char MIN_CHAR = 'a';
 inline size_t ALPHABET_SIZE = 27;
 
 // The radix includes one terminator in addition to the character interval.
-// Stored keys use 7-bit bytes; arbitrary query bytes are rejected as misses.
+// Byte values are ordered unsigned; zero is data, not an implicit terminator.
 struct alphabet_config {
     char min_char = 'a';
     size_t size = 27;
 
-    void validate() const {
-        if (min_char < 0 || size < 2 || size > 127 ||
-            static_cast<unsigned char>(min_char) + size - 2 > 127) {
-            throw std::invalid_argument("CoCo-trie requires a 7-bit alphabet with span at most 126");
-        }
+    int offset(unsigned char ch) const { return int(ch) - int(static_cast<unsigned char>(min_char)); }
+    size_t bitmap_bits(size_t capacity) const { return std::min(size, capacity); }
+    void validate(size_t bitmap_width = 128) const {
+        if (size < 2 || size > std::min<size_t>(bitmap_width, 256) + 1 ||
+            static_cast<unsigned char>(min_char) + size - 2 > 255)
+            throw std::invalid_argument("CoCo-trie alphabet exceeds bitmap capacity or byte range");
     }
 
     bool contains(std::string_view s) const {
@@ -94,17 +95,16 @@ struct alphabet_config {
         return true;
     }
 
-    static alphabet_config from_dataset(const std::vector<std::string>& dataset) {
-        unsigned lo = 128, hi = 0;
+    static alphabet_config from_dataset(const std::vector<std::string>& dataset, size_t bitmap_width = 128) {
+        unsigned lo = 256, hi = 0;
         for (const auto& key : dataset) {
             for (unsigned char c : key) {
-                if (c > 127) throw std::invalid_argument("CoCo-trie keys must contain only 7-bit bytes");
                 lo = std::min(lo, unsigned(c));
                 hi = std::max(hi, unsigned(c));
             }
         }
-        alphabet_config result = lo == 128 ? alphabet_config{} : alphabet_config{char(lo), hi - lo + 2};
-        result.validate();
+        alphabet_config result = lo == 256 ? alphabet_config{} : alphabet_config{char(lo), hi - lo + 2};
+        result.validate(bitmap_width);
         return result;
     }
 

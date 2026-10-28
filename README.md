@@ -63,7 +63,7 @@ int main() {
 
 The vector constructors infer and retain each dictionary's alphabet. Multiple dictionaries with different alphabets can coexist without changing one another's lookups. Input order does not matter; duplicates are treated as one key. Empty dictionaries, the empty string, and keys that are prefixes of other keys are supported. Lookup returns a unique topology ID, not necessarily the input position or lexicographic rank; the missing-key sentinel is `size_t(-1)`.
 
-Stored keys may contain 7-bit bytes (including embedded NUL), with a character interval spanning at most 126 byte values. Unsupported alphabets throw `std::invalid_argument`; out-of-alphabet query bytes return `size_t(-1)`. The incremental builder accepts an explicit `alphabet_config`, for example `Trie_lw<> builder(alphabet_config::from_dataset(dataset))`. The legacy globals remain defaults for that builder and standalone encoding helpers, but changing them does not affect existing tries.
+Stored keys are byte strings, including embedded NUL. The default 128-bit alphabet bitmap supports a contiguous interval of up to 128 byte values; a 256-bit bitmap supports every byte value, including UTF-8 and arbitrary binary strings. Oversized alphabet intervals throw `std::invalid_argument`; out-of-alphabet query bytes return `size_t(-1)`. Comparisons and encoding treat bytes as unsigned. The incremental builder accepts an explicit `alphabet_config`, for example `Trie_lw<> builder(alphabet_config::from_dataset(dataset))`. The legacy globals remain defaults for that builder and standalone encoding helpers, but changing them does not affect existing tries.
 
 `CoCo_v2::serialize` writes a versioned header containing the alphabet and encoding configuration. Use binary streams. Loading does not require setting globals. Old unversioned files must be rebuilt; the payload still requires a compatible native-endian, same-word-size environment. Load only trusted index files.
 
@@ -115,6 +115,32 @@ python3 scripts/perf/construction/run.py --bench build/coco-construction-bench \
 
 The driver supports repeated `--case NAME,INPUT,KEY_LIMIT` arguments, newline-separated input or the length-prefixed `.keys` files used by the uint256 experiments, `--trials`, `--cpu`, and a per-process virtual-memory limit via `--memory-mib` (default 4096). Its `streaming` mode names the sorted/LCP builder; it still holds the input and decision array in memory. Query validation runs after construction timing and RSS capture.
 
+## Parametric alphabet maps and 256-bit codes
+
+`alphamap<Bitmap>` now takes its bitmap integer type as a parameter. Ordinary `alphamap map;` retains the 128-bit default. `Trie_lw`, `sorted_trie_builder`, `CoCo_v1`, and `CoCo_v2` expose a final `Bitmap` template parameter, independent of the integer-code type; it defaults to the code type. Alphabet ranks, byte ordering, and the radix (up to 257, including the terminator) are checked without narrowing to `char` or `uint8_t`.
+
+With a compiler supporting `unsigned _BitInt(256)` (tested with Clang 21), wide integers now work in the production headers:
+
+```c++
+#include "CoCo-trie_v2.hpp"
+
+#ifdef COCO_HAS_UINT256
+alphamap<uint256_t> alphabet_bits;
+alphabet_bits.set_bit<true>(255);
+CoCo_v2<1, uint256_t> wide(coco_sorted_unique, sorted_unique_keys);
+
+// Use a full byte alphabet but keep 128-bit codes:
+using ByteTrie128 = CoCo_v2<1, uint128_t, 18, 0,
+    sdsl::rank_support_v<1>, sdsl::rank_support_v<0, 2>,
+    sux::bits::SimpleSelectZero<>, uint256_t>;
+ByteTrie128 binary(coco_sorted_unique, sorted_unique_keys);
+#endif
+```
+
+GCC continues to build the 128-bit path. Configure with `-DCOCO_REQUIRE_UINT256=ON` to fail early when the compiler lacks wide-integer support. Packed reads/writes handle 0–256 bits without truncating the high half. Alphabet capacity controls the supported byte-value interval (including gaps); code width controls how many characters fit in a jump. Neither removes construction-memory limits or guarantees faster queries.
+
+Serialization retains the existing v2 header for 128-bit maps and adds a v3 header carrying the bitmap width and a wider radix when necessary. The loader checks code/map compatibility; the native-endian, same-word-size and trusted-input restrictions still apply. The old experimental staging tool remains available for reproducing historical experiments, with its original 128-bit map configuration.
+
 ## Datasets 💽
 Examples of already preprocessed small datasets are in the directory `dataset`.
 
@@ -162,12 +188,12 @@ UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir build-sanitize -R tests_boundarie
 
 ### 1. Implement and measure 256-bit integer codes — in progress
 
-- [ ] Integrate an optional `unsigned _BitInt(256)` code path into CoCo, with correct full-width encoding, packed reads/writes, arithmetic limits, and serialization. Retain the 128-bit baseline.
+- [x] Integrate optional `unsigned _BitInt(256)` codes and independent bitmap widths, including full-byte alphabets, packed reads/writes, arithmetic bounds, and serialization. Retain the 128-bit baseline.
 - [ ] Exploit the extra characters per code to make longer jumps; optimize the added encoding, search, and construction costs. Test the hypothesis that fewer jumps can yield substantial lookup improvements.
 - [ ] Benchmark inside CoCo on the paper's datasets, ClickBench, and OpenTelemetry. Use complete-record samples up to 500 MB where available, report distinct keys and actual index size, and test indexes larger than the last-level cache with shuffled full-key query passes.
 - [ ] Report successful/unsuccessful lookup latency, node visits, index space, construction time, and peak construction memory. Keep normal space-optimizer results distinct from controlled fixed-jump experiments, and test correctness and serialization across both widths.
 
-Current experimental code, raw results, and limitations: [256-bit benchmarks](scripts/perf/bitint256/README.md). The temporary adapter and direct fixed-jump writer are experiments; this TODO is not complete until the intended production path is implemented and evaluated.
+Historical experimental results and limitations: [256-bit benchmarks](scripts/perf/bitint256/README.md). Production support is now integrated; the fixed-jump experiments remain distinct from normal optimizer measurements. Work on choosing widths and reducing wide-arithmetic costs remains open.
 
 ### 2. Make index construction faster and substantially less memory hungry — initial path implemented
 

@@ -4,6 +4,10 @@
 #include "succinct_config.hpp"
 
 typedef unsigned __int128 uint128_t;
+#if defined(__BITINT_MAXWIDTH__) && __BITINT_MAXWIDTH__ >= 256
+#define COCO_HAS_UINT256 1
+using uint256_t = unsigned _BitInt(256);
+#endif
 
 #define SUCCINCT_USE_INTRINSICS 1
 
@@ -75,6 +79,8 @@ namespace succinct {
 #endif
         }
 
+
+
         inline int clz_u128(uint128_t u) {
             uint64_t hi = u >> 64;
             uint64_t lo = (uint64_t) u;
@@ -98,6 +104,14 @@ namespace succinct {
         }
 
 
+#ifdef COCO_HAS_UINT256
+        inline bool bsr256(unsigned long* index, uint256_t value) {
+            const uint128_t high = uint128_t(value >> 128);
+            if (high) { bsr128(index, high); *index += 128; return true; }
+            return bsr128(index, uint128_t(value));
+        }
+#endif
+
         template<typename T>
         __INTRIN_INLINE void prefetch(T const *ptr) {
             _mm_prefetch((const char *) ptr, _MM_HINT_T0);
@@ -114,6 +128,7 @@ namespace succinct {
 //#endif /* SUCCINCT_USE_INTRINSICS */
 
 #if SUCCINCT_USE_POPCNT
+
 
         __INTRIN_INLINE uint64_t popcount(uint64_t x)
         {

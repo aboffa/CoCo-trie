@@ -69,7 +69,7 @@ TEST_CASE("Sorted construction preserves cost, encoding, IDs and serialization")
 TEST_CASE("Sorted construction validates its input and supports the explicit API") {
     REQUIRE_THROWS_AS(CoCo_v2<>(coco_sorted_unique, std::vector<std::string>{"b","a"}), std::invalid_argument);
     REQUIRE_THROWS_AS(CoCo_v2<>(coco_sorted_unique, std::vector<std::string>{"a","a"}), std::invalid_argument);
-    REQUIRE_THROWS_AS(CoCo_v2<>(coco_sorted_unique, std::vector<std::string>{std::string(1,char(255))}), std::invalid_argument);
+    REQUIRE_THROWS_AS(CoCo_v2<>(coco_sorted_unique, std::vector<std::string>{std::string(1,char(0)),std::string(1,char(255))}), std::invalid_argument);
     CoCo_v2<> trie(coco_sorted_unique, std::vector<std::string>{"a","ab","b"});
     REQUIRE(trie.look_up("ab") != size_t(-1));
     REQUIRE(trie.look_up("aa") == size_t(-1));

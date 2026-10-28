@@ -11,13 +11,14 @@ inline constexpr coco_sorted_unique_t coco_sorted_unique{};
 // Build from prefix intervals in a sorted dictionary. No character-node tree
 // is materialized: only the active LCP stack and two-byte decisions are kept.
 template<uint8_t MIN_L = 1, typename Code = uint128_t,
-         uint8_t MaxLevels = MAX_L_THRS, uint8_t Relaxation = 0>
+         uint8_t MaxLevels = MAX_L_THRS, uint8_t Relaxation = 0, class Bitmap = Code>
 class sorted_trie_builder {
     static_assert(MIN_L == 1, "The streaming builder currently supports MIN_L=1");
     static_assert(MaxLevels > 0 && MaxLevels <= MAX_L_THRS_amap);
     static_assert(BASE_COST == 0, "Frontier summaries assume zero-cost leaves");
-    using Legacy = Trie_lw<MIN_L, Code, MaxLevels, Relaxation>;
-    using Encoders = CoCo_v1<MIN_L, Code, MaxLevels, Relaxation>;
+    using alphamap = basic_alphamap<Bitmap>;
+    using Legacy = Trie_lw<MIN_L, Code, MaxLevels, Relaxation, Bitmap>;
+    using Encoders = CoCo_v1<MIN_L, Code, MaxLevels, Relaxation, sdsl::rank_support_v<1>, sdsl::rank_support_v<0, 2>, sux::bits::SimpleSelectZero<>, Bitmap>;
     static constexpr size_t levels = MAX_L_THRS_amap;
 
     struct Frame {
@@ -25,12 +26,12 @@ class sorted_trie_builder {
         size_t height = 0, max_child_levels = 0, safe_levels = 0, best = 0;
         bool terminal = false;
         std::array<size_t, levels> internal{}, leaves{}, costs{};
-        std::array<uint128_t, levels + 1> maps{};
+        std::array<Bitmap, levels + 1> maps{};
     };
     const std::vector<std::string>& keys_;
     std::vector<size_t> offsets_;
     std::vector<uint16_t> decisions_;
-    std::array<size_t, 128> safe_limits_{};
+    std::array<size_t, 258> safe_limits_{};
 
     size_t common_prefix(size_t i) const {
         return keys_[i].size() - (offsets_[i + 1] - offsets_[i]);
@@ -112,8 +113,8 @@ class sorted_trie_builder {
                 scratch.node_type_vec[i] = index_types;
                 scratch.alphamaps[i] = alphamap(f.maps[i]);
                 if (i < global_limit) {
-                    const Code a = i < left.size() ? Code(left[i] - alphabet.min_char + 1) : Code(0);
-                    const Code b = i < right.size() ? Code(right[i] - alphabet.min_char + 1) : Code(0);
+                    const Code a = i < left.size() ? Code(alphabet.offset(left[i]) + 1) : Code(0);
+                    const Code b = i < right.size() ? Code(alphabet.offset(right[i]) + 1) : Code(0);
                     low[i] = (i ? low[i - 1] * Code(alphabet.size) : Code(0)) + a;
                     high[i] = (i ? high[i - 1] * Code(alphabet.size) : Code(0)) + b;
                 }
@@ -121,9 +122,9 @@ class sorted_trie_builder {
                 if (i && f.maps[i] == f.maps[i - 1]) {
                     const Code radix = map.rankmax() + 1;
                     low_real[i] = low_real[i - 1] * radix +
-                        (i < left.size() ? Code(map.rank(left[i] - alphabet.min_char) + 1) : Code(0));
+                        (i < left.size() ? Code(map.rank(alphabet.offset(left[i])) + 1) : Code(0));
                     high_real[i] = high_real[i - 1] * radix +
-                        (i < right.size() ? Code(map.rank(right[i] - alphabet.min_char) + 1) : Code(0));
+                        (i < right.size() ? Code(map.rank(alphabet.offset(right[i])) + 1) : Code(0));
                 } else {
                     low_real[i] = Legacy::enc_real(left, i, map, alphabet);
                     high_real[i] = Legacy::enc_real(right, i, map, alphabet);
@@ -150,7 +151,7 @@ class sorted_trie_builder {
             finish(child, depth, end);
             Frame& parent = stack[depth - 1];
             const auto ch = keys_[child.first_key][depth - 1];
-            parent.maps[0] |= uint128_t(1) << (ch - alphabet.min_char);
+            parent.maps[0] |= Bitmap(1) << (alphabet.offset(ch));
             parent.height = std::max(parent.height, std::min(levels, child.height + 1));
             parent.max_child_levels = std::max(parent.max_child_levels, child.safe_levels);
             parent.costs[0] += child.best;
@@ -209,7 +210,7 @@ class sorted_trie_builder {
             if (remapped) {
                 for (size_t i = first; i < node.hi; ++i)
                     for (char ch : std::string_view(keys_[i]).substr(node.depth, index + 1))
-                        map.template set_bit<1>(ch - alphabet.min_char);
+                        map.template set_bit<1>(alphabet.offset(ch));
             }
             codes.clear();
             for (size_t begin = first; begin < node.hi;) {
@@ -227,7 +228,7 @@ class sorted_trie_builder {
             encoding.append_bits(uint64_t(index), bits_for_L);
             encoding.append_bits(uint64_t(type), NUM_BIT_TYPE);
             encoding.append_bits(uint64_t(terminal), 1);
-            if (remapped) encoding.append_bits(map.bitmap, alphabet.size);
+            if (remapped) encoding.append_bits(map.bitmap, alphabet.bitmap_bits(alphamap::width));
             encoding.append_bits(codes.front(), remapped ? bits_first_code<MIN_L, Code>(map.rankmax(), index) : log_sigma * (index + 1));
             const Code first_code = codes.front(), universe = codes.back() - first_code;
             for (size_t i = 1; i < codes.size(); ++i) codes[i - 1] = codes[i] - first_code - 1;
@@ -258,7 +259,7 @@ public:
     std::unique_ptr<succinct::bit_vector> labels;
 
     explicit sorted_trie_builder(const std::vector<std::string>& keys, size_t fixed_length = 0)
-        : keys_(keys), alphabet(alphabet_config::from_dataset(keys)), log_sigma(log_universe(alphabet.size)) {
+        : keys_(keys), alphabet(alphabet_config::from_dataset(keys, alphamap::width)), log_sigma(log_universe(alphabet.size)) {
         prepare();
         root_terminal = !keys.empty() && keys.front().empty();
         if (!keys.empty() && !keys.back().empty()) {
