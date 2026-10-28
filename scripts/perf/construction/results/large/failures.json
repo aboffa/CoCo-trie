@@ -1,0 +1,16 @@
+[
+  {
+    "trial": 0,
+    "dataset": "clickbench-1m-URL",
+    "mode": "legacy",
+    "returncode": -11,
+    "error": ""
+  },
+  {
+    "trial": 0,
+    "dataset": "it2004-500MB",
+    "mode": "legacy",
+    "returncode": 1,
+    "error": "std::bad_alloc\n"
+  }
+]

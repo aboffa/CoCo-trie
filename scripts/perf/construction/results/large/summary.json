@@ -1,0 +1,24 @@
+[
+  {
+    "dataset": "clickbench-1m-URL",
+    "mode": "streaming",
+    "trials": 1,
+    "bits": 128,
+    "keys": 327533,
+    "key_bytes": 116892051,
+    "index_bytes": 92395089,
+    "build_seconds": 98.1355,
+    "peak_rss_kib": 460460
+  },
+  {
+    "dataset": "it2004-500MB",
+    "mode": "streaming",
+    "trials": 1,
+    "bits": 128,
+    "keys": 6116714,
+    "key_bytes": 494013686,
+    "index_bytes": 95876257,
+    "build_seconds": 49.7756,
+    "peak_rss_kib": 1197132
+  }
+]

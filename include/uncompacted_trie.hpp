@@ -472,6 +472,19 @@ public:
             assert(min_u_real[i] <= max_u_real[i]);
         }
 
+        evaluate_space_cost(source, DELTA_L_FIXED, DELTA_L_AMAP, fo_n, bc,
+                            min_u, max_u, min_u_real, max_u_real, space_cost, alphabet_, log_sigma);
+        return space_cost;
+    }
+
+    // Shared scoring policy. Both builders supply the same frontier statistics;
+    // keeping the selection logic here also preserves its tie-breaking rules.
+    static void evaluate_space_cost(
+            TrieNode_lw* source, size_t DELTA_L_FIXED, size_t DELTA_L_AMAP,
+            const std::vector<size_t>& fo_n, const std::vector<size_t>& bc,
+            const std::vector<code_type>& min_u, const std::vector<code_type>& max_u,
+            const std::vector<code_type>& min_u_real, const std::vector<code_type>& max_u_real,
+            std::vector<size_t>& space_cost, alphabet_config alphabet_, size_t log_sigma) {
         // for each i, select the best encoding
         for (size_t i = 0; i < DELTA_L_FIXED; ++i) {
             size_t n = fo_n[i] - 1;
@@ -644,9 +657,7 @@ public:
                 space_cost[i] = space_bits_fixed + space_bits_best /*local cost*/ + bc[i] /*descendant cost*/ ;
             }
         }
-        return space_cost;
     }
-
 
     // recursive version. Filling in_n and lf_n recursively
     void space_cost_recursive(

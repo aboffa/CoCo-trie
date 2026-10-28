@@ -1,0 +1,20 @@
+{
+  "cpu": 0,
+  "memory_limit_mib": 4096,
+  "trials": 3,
+  "bits": "256",
+  "cases": [
+    [
+      "random40-8k",
+      "random40",
+      "8000"
+    ],
+    [
+      "proteins",
+      "dataset/proteins.distinct_no_suffixes_small",
+      "10000000"
+    ]
+  ],
+  "benchmark": "/tmp/coco-construction-wide/bench",
+  "timestamp_utc": "2026-10-28T21:17:33Z"
+}

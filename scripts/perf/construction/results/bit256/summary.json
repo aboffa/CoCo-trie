@@ -1,0 +1,46 @@
+[
+  {
+    "dataset": "proteins",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 256,
+    "keys": 14412,
+    "key_bytes": 497545,
+    "index_bytes": 110598,
+    "build_seconds": 4.00333,
+    "peak_rss_kib": 428676
+  },
+  {
+    "dataset": "proteins",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 256,
+    "keys": 14412,
+    "key_bytes": 497545,
+    "index_bytes": 110598,
+    "build_seconds": 0.248038,
+    "peak_rss_kib": 17980
+  },
+  {
+    "dataset": "random40-8k",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 256,
+    "keys": 8000,
+    "key_bytes": 320000,
+    "index_bytes": 189888,
+    "build_seconds": 4.85211,
+    "peak_rss_kib": 639104
+  },
+  {
+    "dataset": "random40-8k",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 256,
+    "keys": 8000,
+    "key_bytes": 320000,
+    "index_bytes": 189888,
+    "build_seconds": 0.335934,
+    "peak_rss_kib": 17980
+  }
+]

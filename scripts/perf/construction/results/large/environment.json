@@ -1,0 +1,20 @@
+{
+  "cpu": 0,
+  "memory_limit_mib": 4096,
+  "trials": 1,
+  "bits": "128",
+  "cases": [
+    [
+      "clickbench-1m-URL",
+      "/tmp/coco-large-data/hits-1m-URL.keys",
+      "100000000"
+    ],
+    [
+      "it2004-500MB",
+      "scripts/perf/bitint256/work-large/it-2004-500MB.keys",
+      "100000000"
+    ]
+  ],
+  "benchmark": "/tmp/coco-construction-bench",
+  "timestamp_utc": "2026-10-28T21:21:50Z"
+}

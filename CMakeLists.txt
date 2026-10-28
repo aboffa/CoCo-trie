@@ -32,6 +32,10 @@ add_executable(example example.cpp)
 target_link_libraries(example sdsl succinct ${Boost_LIBRARIES})
 target_compile_definitions(example PRIVATE BIG_ALPHABET)
 
+add_executable(coco-construction-bench scripts/perf/construction/benchmark.cpp)
+target_link_libraries(coco-construction-bench PRIVATE sdsl succinct)
+target_compile_definitions(coco-construction-bench PRIVATE BIG_ALPHABET)
+
 include(CTest)
 if(BUILD_TESTING)
     add_subdirectory(test)

@@ -20,6 +20,7 @@
 #include "uncompacted_trie.hpp"
 #include "louds_sux.hpp"
 #include "CoCo-trie_v1.hpp"
+#include "sorted_trie_builder.hpp"
 
 template<uint8_t MIN_L = 1,
         typename code_type = uint128_t,
@@ -188,6 +189,22 @@ public:
         load(in);
     };
 
+    using sorted_builder_type = sorted_trie_builder<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
+
+    CoCo_v2(coco_sorted_unique_t, const std::vector<std::string>& keys, size_t l_fixed = 0)
+        : CoCo_v2(sorted_builder_type(keys, l_fixed)) {}
+
+    explicit CoCo_v2(sorted_builder_type&& built)
+        : alphabet_(built.alphabet), root_terminal_(built.root_terminal) {
+        log_sigma = built.log_sigma;
+        if (built.topology_bits.empty()) return;
+        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(built.topology_bits);
+        pointers_to_encoding = std::move(built.encoding_pointers);
+        internal_variable = std::move(built.labels);
+        num_child_root = built.root_children;
+        bits_for_L = built.bits_for_L;
+    }
+
 
     CoCo_v2(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset)) {
         utrie_t uncompacted(alphabet_);
@@ -353,7 +370,6 @@ public:
             n = topology->num_child(bv_index);
         }
     }
-
 
     size_t size_in_bits() const {
         if (!topology) return sizeof(*this) * CHAR_BIT;

@@ -1,0 +1,50 @@
+{
+  "cpu": 0,
+  "memory_limit_mib": 4096,
+  "trials": 3,
+  "bits": "128",
+  "cases": [
+    [
+      "british-english.txt_no_suffixes_small",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/british-english.txt_no_suffixes_small",
+      100000000
+    ],
+    [
+      "dna-k-mer.txt_no_suffixes_small",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/dna-k-mer.txt_no_suffixes_small",
+      100000000
+    ],
+    [
+      "it-2004.urls_no_suffixes_small",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/it-2004.urls_no_suffixes_small",
+      100000000
+    ],
+    [
+      "proteins.distinct_no_suffixes_small",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/proteins.distinct_no_suffixes_small",
+      100000000
+    ],
+    [
+      "trec-text.terms_no_suffixes_small",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/trec-text.terms_no_suffixes_small",
+      100000000
+    ],
+    [
+      "customer_id_column.txt.sorted_no_suffixes_small",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/customer_id_column.txt.sorted_no_suffixes_small",
+      100000000
+    ],
+    [
+      "random40-8k",
+      "random40",
+      8000
+    ],
+    [
+      "random40-64k",
+      "random40",
+      64000
+    ]
+  ],
+  "benchmark": "/tmp/coco-construction-bench",
+  "timestamp_utc": "2026-10-28T21:16:19Z"
+}

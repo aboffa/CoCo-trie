@@ -32,5 +32,5 @@ jobs:
           UBSAN_OPTIONS: halt_on_error=1
           ASAN_OPTIONS: detect_leaks=1
         run: |
-          cmake --build build-sanitize --target tests_boundaries --parallel 2
-          ctest --test-dir build-sanitize -R tests_boundaries --output-on-failure
+          cmake --build build-sanitize --target tests_boundaries tests_sorted_builder --parallel 2
+          ctest --test-dir build-sanitize -R 'tests_(boundaries|sorted_builder)' --output-on-failure

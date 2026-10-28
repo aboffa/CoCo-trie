@@ -1,0 +1,178 @@
+[
+  {
+    "dataset": "british-english.txt_no_suffixes_small",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 23015,
+    "key_bytes": 173592,
+    "index_bytes": 65936,
+    "build_seconds": 0.0387534,
+    "peak_rss_kib": 25596
+  },
+  {
+    "dataset": "british-english.txt_no_suffixes_small",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 23015,
+    "key_bytes": 173592,
+    "index_bytes": 65936,
+    "build_seconds": 0.00563912,
+    "peak_rss_kib": 17964
+  },
+  {
+    "dataset": "customer_id_column.txt.sorted_no_suffixes_small",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 629662,
+    "key_bytes": 9370336,
+    "index_bytes": 704039,
+    "build_seconds": 0.887843,
+    "peak_rss_kib": 465972
+  },
+  {
+    "dataset": "customer_id_column.txt.sorted_no_suffixes_small",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 629662,
+    "key_bytes": 9370336,
+    "index_bytes": 704039,
+    "build_seconds": 0.0766666,
+    "peak_rss_kib": 46448
+  },
+  {
+    "dataset": "dna-k-mer.txt_no_suffixes_small",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 80727,
+    "key_bytes": 967848,
+    "index_bytes": 88740,
+    "build_seconds": 0.0748408,
+    "peak_rss_kib": 57724
+  },
+  {
+    "dataset": "dna-k-mer.txt_no_suffixes_small",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 80727,
+    "key_bytes": 967848,
+    "index_bytes": 88740,
+    "build_seconds": 0.00888823,
+    "peak_rss_kib": 17964
+  },
+  {
+    "dataset": "it-2004.urls_no_suffixes_small",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 5000,
+    "key_bytes": 474213,
+    "index_bytes": 17658,
+    "build_seconds": 0.0291475,
+    "peak_rss_kib": 21772
+  },
+  {
+    "dataset": "it-2004.urls_no_suffixes_small",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 5000,
+    "key_bytes": 474213,
+    "index_bytes": 17658,
+    "build_seconds": 0.00823446,
+    "peak_rss_kib": 17964
+  },
+  {
+    "dataset": "proteins.distinct_no_suffixes_small",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 14412,
+    "key_bytes": 497545,
+    "index_bytes": 116349,
+    "build_seconds": 0.47185,
+    "peak_rss_kib": 236564
+  },
+  {
+    "dataset": "proteins.distinct_no_suffixes_small",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 14412,
+    "key_bytes": 497545,
+    "index_bytes": 116349,
+    "build_seconds": 0.105858,
+    "peak_rss_kib": 17964
+  },
+  {
+    "dataset": "random40-64k",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 64000,
+    "key_bytes": 2560000,
+    "index_bytes": 1831798,
+    "build_seconds": 8.1352,
+    "peak_rss_kib": 3639416
+  },
+  {
+    "dataset": "random40-64k",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 64000,
+    "key_bytes": 2560000,
+    "index_bytes": 1831798,
+    "build_seconds": 1.38507,
+    "peak_rss_kib": 19508
+  },
+  {
+    "dataset": "random40-8k",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 8000,
+    "key_bytes": 320000,
+    "index_bytes": 226944,
+    "build_seconds": 0.719722,
+    "peak_rss_kib": 470144
+  },
+  {
+    "dataset": "random40-8k",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 8000,
+    "key_bytes": 320000,
+    "index_bytes": 226944,
+    "build_seconds": 0.18817,
+    "peak_rss_kib": 17964
+  },
+  {
+    "dataset": "trec-text.terms_no_suffixes_small",
+    "mode": "legacy",
+    "trials": 3,
+    "bits": 128,
+    "keys": 855665,
+    "key_bytes": 8144322,
+    "index_bytes": 1324797,
+    "build_seconds": 0.962917,
+    "peak_rss_kib": 572824
+  },
+  {
+    "dataset": "trec-text.terms_no_suffixes_small",
+    "mode": "streaming",
+    "trials": 3,
+    "bits": 128,
+    "keys": 855665,
+    "key_bytes": 8144322,
+    "index_bytes": 1324797,
+    "build_seconds": 0.138711,
+    "peak_rss_kib": 54856
+  }
+]
