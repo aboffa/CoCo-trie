@@ -110,6 +110,32 @@ cmake --build build-sanitize --target tests_boundaries --parallel
 UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir build-sanitize -R tests_boundaries --output-on-failure
 ```
 
+## Development TODOs
+
+### 1. Implement and measure 256-bit integer codes — in progress
+
+- [ ] Integrate an optional `unsigned _BitInt(256)` code path into CoCo, with correct full-width encoding, packed reads/writes, arithmetic limits, and serialization. Retain the 128-bit baseline.
+- [ ] Exploit the extra characters per code to make longer jumps; optimize the added encoding, search, and construction costs. Test the hypothesis that fewer jumps can yield substantial lookup improvements.
+- [ ] Benchmark inside CoCo on the paper's datasets, ClickBench, and OpenTelemetry. Use complete-record samples up to 500 MB where available, report distinct keys and actual index size, and test indexes larger than the last-level cache with shuffled full-key query passes.
+- [ ] Report successful/unsuccessful lookup latency, node visits, index space, construction time, and peak construction memory. Keep normal space-optimizer results distinct from controlled fixed-jump experiments, and test correctness and serialization across both widths.
+
+Current experimental code, raw results, and limitations: [256-bit benchmarks](scripts/perf/bitint256/README.md). The temporary adapter and direct fixed-jump writer are experiments; this TODO is not complete until the intended production path is implemented and evaluated.
+
+### 2. Make index construction faster and substantially less memory hungry
+
+- [ ] Start from sorted, deduplicated keys with non-distinguishing suffixes removed, as in the existing prefix-only preprocessing. Explore building by scanning those strings in several passes rather than materializing a pointer-based node for every character.
+- [ ] Use prefix/LCP boundaries and contiguous summaries to compute compaction costs and emit the compact index. Preserve the space-optimization objective; compare resulting decisions and lookup behavior with the current builder.
+- [ ] Bound temporary storage, avoid redundant per-node allocations and repeated descendant traversals, and separately measure input preprocessing, optimization, and encoding time.
+- [ ] Establish scaling curves for build time and peak RSS versus input bytes and key count. Record full-string and prefix-only workloads separately, and verify that preprocessing does not silently change the promised lookup semantics.
+
+### 3. Implement the paper's variants as `CoCoPrime` and `CoCoCC`
+
+Study [C²: Cache-Conscious Succinct Tries with Adaptive Unary Path Compression](https://arxiv.org/abs/2606.16104) and its [reference implementation](https://github.com/alexztc/C2), then implement:
+
+- [ ] **`CoCoPrime` = the paper's CoCo′.** Reproduce its improved construction routine while retaining the original CoCo topology/bitvector design. Section 5.2 builds the intermediate trie using C²-FST/LOUDS-Sparse, so same-depth descendants occupy contiguous storage. Compare this approach with the sorted-string scanning builder in TODO 2.
+- [ ] **`CoCoCC` = the paper's C²-CoCo.** Implement its LOUDS-Sparse topology, C₁ cache-conscious layout and functional index, then C₂ unary-path compression with FSST tails. Handle tail links with the required lower-bound/prefix check. Reproduce the paper's zero-recursion CoCo configuration first and expose recursion separately.
+- [ ] Keep CoCo, CoCoPrime, and CoCoCC independently selectable. Validate lookup behavior and serialization, benchmark construction memory/time and index space/query latency, and measure C₁ and C₂ separately before combining them. Evaluate 128- and 256-bit codes across the variants where applicable.
+
 ## License 🪪
 
 This project is released for academic purposes under the terms of the GNU General Public License v3.0.

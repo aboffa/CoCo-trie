@@ -1,0 +1,32 @@
+[
+  {
+    "name": "it2004-500MB",
+    "policy": "fixed",
+    "width": "128",
+    "trials": 3,
+    "keys": 6116714.0,
+    "queries": 100000.0,
+    "index_bytes": 141164862.0,
+    "hit_ns": 1486.29,
+    "miss_ns": 682.947,
+    "hit_nodes": 5.00098,
+    "cold_hit_ns": 7787.94,
+    "cold_miss_ns": 4932.97,
+    "peak_rss_kib": 1289280.0
+  },
+  {
+    "name": "it2004-500MB",
+    "policy": "fixed",
+    "width": "256",
+    "trials": 3,
+    "keys": 6116714.0,
+    "queries": 100000.0,
+    "index_bytes": 174688203.0,
+    "hit_ns": 1445.17,
+    "miss_ns": 755.547,
+    "hit_nodes": 2.7561,
+    "cold_hit_ns": 7757.22,
+    "cold_miss_ns": 5952.66,
+    "peak_rss_kib": 1322152.0
+  }
+]

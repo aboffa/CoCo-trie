@@ -1,0 +1,15 @@
+{
+  "compiler": "Ubuntu clang version 21.1.8 (6ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-21/bin\n",
+  "flags": [
+    "-O3",
+    "-DNDEBUG",
+    "-march=native",
+    "-std=gnu++20",
+    "-DBIG_ALPHABET"
+  ],
+  "cpu": 0,
+  "trials": 3,
+  "timestamp_utc": "2026-10-28T19:34:32Z",
+  "maximum_candidate_levels": 63,
+  "notes": "Both widths have the same level cap and enforce their width-safe arithmetic limits. Builder destroyed before timing. Timed look_up has no instrumentation. Trace is a separate copied method with result equality checks. Encoding replay is an isolated diagnostic, not an exact timing decomposition."
+}

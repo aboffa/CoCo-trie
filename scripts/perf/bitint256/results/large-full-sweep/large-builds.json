@@ -1,0 +1,38 @@
+[
+  {
+    "name": "it2004-500MB",
+    "policy": "fixed",
+    "width": "128",
+    "reused_index": "scripts/perf/bitint256/work-large/indexes/it2004-500MB-fixed-128.coco"
+  },
+  {
+    "name": "it2004-500MB",
+    "policy": "fixed",
+    "width": "256",
+    "reused_index": "scripts/perf/bitint256/work-large/indexes/it2004-500MB-fixed-256.coco"
+  },
+  {
+    "name": "hits-1m-URL",
+    "policy": "fixed",
+    "width": "128",
+    "reused_index": "scripts/perf/bitint256/work-large/indexes/hits-1m-URL-fixed-128.coco"
+  },
+  {
+    "name": "hits-1m-URL",
+    "policy": "fixed",
+    "width": "256",
+    "reused_index": "scripts/perf/bitint256/work-large/indexes/hits-1m-URL-fixed-256.coco"
+  },
+  {
+    "name": "lower40-4000000",
+    "policy": "fixed",
+    "width": "128",
+    "reused_index": "scripts/perf/bitint256/work-large/indexes/lower40-4000000-fixed-128.coco"
+  },
+  {
+    "name": "lower40-4000000",
+    "policy": "fixed",
+    "width": "256",
+    "reused_index": "scripts/perf/bitint256/work-large/indexes/lower40-4000000-fixed-256.coco"
+  }
+]

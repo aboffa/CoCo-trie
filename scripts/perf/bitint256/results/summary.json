@@ -1,0 +1,367 @@
+{
+  "arithmetic": [
+    {
+      "type": "native128",
+      "operation": "add_full_width",
+      "median_ns": 0.610905
+    },
+    {
+      "type": "native128",
+      "operation": "div_constant_96",
+      "median_ns": 1.35861
+    },
+    {
+      "type": "native128",
+      "operation": "div_runtime_radix",
+      "median_ns": 4.73727
+    },
+    {
+      "type": "native128",
+      "operation": "encode16_runtime_radix",
+      "median_ns": 9.04465
+    },
+    {
+      "type": "native128",
+      "operation": "mul_runtime_radix",
+      "median_ns": 0.573383
+    },
+    {
+      "type": "native128",
+      "operation": "packed_lower_bound",
+      "median_ns": 84.8314
+    },
+    {
+      "type": "bit128",
+      "operation": "add_full_width",
+      "median_ns": 0.599892
+    },
+    {
+      "type": "bit128",
+      "operation": "div_constant_96",
+      "median_ns": 1.29102
+    },
+    {
+      "type": "bit128",
+      "operation": "div_runtime_radix",
+      "median_ns": 4.43745
+    },
+    {
+      "type": "bit128",
+      "operation": "encode16_runtime_radix",
+      "median_ns": 6.89397
+    },
+    {
+      "type": "bit128",
+      "operation": "mul_runtime_radix",
+      "median_ns": 0.513538
+    },
+    {
+      "type": "bit128",
+      "operation": "packed_lower_bound",
+      "median_ns": 81.3883
+    },
+    {
+      "type": "bit256",
+      "operation": "add_full_width",
+      "median_ns": 0.849609
+    },
+    {
+      "type": "bit256",
+      "operation": "div_constant_96",
+      "median_ns": 636.91
+    },
+    {
+      "type": "bit256",
+      "operation": "div_runtime_radix",
+      "median_ns": 668.999
+    },
+    {
+      "type": "bit256",
+      "operation": "encode16_runtime_radix",
+      "median_ns": 17.1239
+    },
+    {
+      "type": "bit256",
+      "operation": "encode32_runtime_radix",
+      "median_ns": 42.5498
+    },
+    {
+      "type": "bit256",
+      "operation": "mul_runtime_radix",
+      "median_ns": 0.979111
+    },
+    {
+      "type": "bit256",
+      "operation": "packed_lower_bound",
+      "median_ns": 100.423
+    },
+    {
+      "type": "boost256",
+      "operation": "add_full_width",
+      "median_ns": 19.3713
+    },
+    {
+      "type": "boost256",
+      "operation": "div_constant_96",
+      "median_ns": 25.8881
+    },
+    {
+      "type": "boost256",
+      "operation": "div_runtime_radix",
+      "median_ns": 26.1756
+    },
+    {
+      "type": "boost256",
+      "operation": "encode16_runtime_radix",
+      "median_ns": 70.2024
+    },
+    {
+      "type": "boost256",
+      "operation": "encode32_runtime_radix",
+      "median_ns": 151.416
+    },
+    {
+      "type": "boost256",
+      "operation": "mul_runtime_radix",
+      "median_ns": 17.0057
+    },
+    {
+      "type": "boost256",
+      "operation": "packed_lower_bound",
+      "median_ns": 104.127
+    }
+  ],
+  "trie": [
+    {
+      "dataset": "british-english.txt_no_suffixes_small",
+      "variant": "native128",
+      "keys": 23015,
+      "build_ms": 25.3901,
+      "hit_ns": 295.924,
+      "miss_ns": 197.583,
+      "bits_per_key": 22.9193,
+      "nodes": 26120.0,
+      "mean_collapsed_levels": 2.55222
+    },
+    {
+      "dataset": "british-english.txt_no_suffixes_small",
+      "variant": "bit256_same_layout",
+      "keys": 23015,
+      "build_ms": 29.4158,
+      "hit_ns": 310.97,
+      "miss_ns": 204.779,
+      "bits_per_key": 22.9193,
+      "nodes": 26120.0,
+      "mean_collapsed_levels": 2.55222
+    },
+    {
+      "dataset": "british-english.txt_no_suffixes_small",
+      "variant": "bit256_extended",
+      "keys": 23015,
+      "build_ms": 65.5908,
+      "hit_ns": 304.038,
+      "miss_ns": 204.928,
+      "bits_per_key": 22.9193,
+      "nodes": 26120.0,
+      "mean_collapsed_levels": 2.55222
+    },
+    {
+      "dataset": "customer_id_column.txt.sorted_no_suffixes_small",
+      "variant": "native128",
+      "keys": 50000,
+      "build_ms": 83.3182,
+      "hit_ns": 271.849,
+      "miss_ns": 117.25,
+      "bits_per_key": 12.3936,
+      "nodes": 50007.0,
+      "mean_collapsed_levels": 5.71429
+    },
+    {
+      "dataset": "customer_id_column.txt.sorted_no_suffixes_small",
+      "variant": "bit256_same_layout",
+      "keys": 50000,
+      "build_ms": 90.5106,
+      "hit_ns": 283.287,
+      "miss_ns": 121.823,
+      "bits_per_key": 12.3936,
+      "nodes": 50007.0,
+      "mean_collapsed_levels": 5.71429
+    },
+    {
+      "dataset": "customer_id_column.txt.sorted_no_suffixes_small",
+      "variant": "bit256_extended",
+      "keys": 50000,
+      "build_ms": 145.076,
+      "hit_ns": 282.492,
+      "miss_ns": 124.515,
+      "bits_per_key": 12.3936,
+      "nodes": 50007.0,
+      "mean_collapsed_levels": 5.71429
+    },
+    {
+      "dataset": "dna-k-mer.txt_no_suffixes_small",
+      "variant": "native128",
+      "keys": 50000,
+      "build_ms": 44.9431,
+      "hit_ns": 277.549,
+      "miss_ns": 105.456,
+      "bits_per_key": 7.00878,
+      "nodes": 50407.0,
+      "mean_collapsed_levels": 3.67568
+    },
+    {
+      "dataset": "dna-k-mer.txt_no_suffixes_small",
+      "variant": "bit256_same_layout",
+      "keys": 50000,
+      "build_ms": 45.6284,
+      "hit_ns": 298.644,
+      "miss_ns": 110.513,
+      "bits_per_key": 7.00878,
+      "nodes": 50407.0,
+      "mean_collapsed_levels": 3.67568
+    },
+    {
+      "dataset": "dna-k-mer.txt_no_suffixes_small",
+      "variant": "bit256_extended",
+      "keys": 50000,
+      "build_ms": 71.9807,
+      "hit_ns": 307.1,
+      "miss_ns": 115.64,
+      "bits_per_key": 7.00878,
+      "nodes": 50407.0,
+      "mean_collapsed_levels": 3.67568
+    },
+    {
+      "dataset": "it-2004.urls_no_suffixes_small",
+      "variant": "native128",
+      "keys": 5000,
+      "build_ms": 28.5145,
+      "hit_ns": 443.733,
+      "miss_ns": 192.861,
+      "bits_per_key": 28.2534,
+      "nodes": 5531.0,
+      "mean_collapsed_levels": 10.6172
+    },
+    {
+      "dataset": "it-2004.urls_no_suffixes_small",
+      "variant": "bit256_same_layout",
+      "keys": 5000,
+      "build_ms": 38.8932,
+      "hit_ns": 533.987,
+      "miss_ns": 246.825,
+      "bits_per_key": 28.2534,
+      "nodes": 5531.0,
+      "mean_collapsed_levels": 10.6172
+    },
+    {
+      "dataset": "it-2004.urls_no_suffixes_small",
+      "variant": "bit256_extended",
+      "keys": 5000,
+      "build_ms": 203.505,
+      "hit_ns": 536.65,
+      "miss_ns": 251.427,
+      "bits_per_key": 27.566,
+      "nodes": 5465.0,
+      "mean_collapsed_levels": 12.0493
+    },
+    {
+      "dataset": "proteins.distinct_no_suffixes_small",
+      "variant": "native128",
+      "keys": 14412,
+      "build_ms": 406.612,
+      "hit_ns": 364.211,
+      "miss_ns": 221.772,
+      "bits_per_key": 64.5845,
+      "nodes": 20099.0,
+      "mean_collapsed_levels": 18.6907
+    },
+    {
+      "dataset": "proteins.distinct_no_suffixes_small",
+      "variant": "bit256_same_layout",
+      "keys": 14412,
+      "build_ms": 577.637,
+      "hit_ns": 409.332,
+      "miss_ns": 248.309,
+      "bits_per_key": 64.5845,
+      "nodes": 20099.0,
+      "mean_collapsed_levels": 18.6907
+    },
+    {
+      "dataset": "proteins.distinct_no_suffixes_small",
+      "variant": "bit256_extended",
+      "keys": 14412,
+      "build_ms": 4294.42,
+      "hit_ns": 383.999,
+      "miss_ns": 238.932,
+      "bits_per_key": 61.2467,
+      "nodes": 18943.0,
+      "mean_collapsed_levels": 23.3165
+    },
+    {
+      "dataset": "synthetic40",
+      "variant": "native128",
+      "keys": 8000,
+      "build_ms": 706.61,
+      "hit_ns": 283.032,
+      "miss_ns": 247.334,
+      "bits_per_key": 226.944,
+      "nodes": 16027.0,
+      "mean_collapsed_levels": 15.0274
+    },
+    {
+      "dataset": "synthetic40",
+      "variant": "bit256_same_layout",
+      "keys": 8000,
+      "build_ms": 1070.54,
+      "hit_ns": 316.192,
+      "miss_ns": 295.074,
+      "bits_per_key": 226.944,
+      "nodes": 16027.0,
+      "mean_collapsed_levels": 15.0274
+    },
+    {
+      "dataset": "synthetic40",
+      "variant": "bit256_extended",
+      "keys": 8000,
+      "build_ms": 4740.75,
+      "hit_ns": 314.228,
+      "miss_ns": 307.859,
+      "bits_per_key": 189.888,
+      "nodes": 8027.0,
+      "mean_collapsed_levels": 37.5926
+    },
+    {
+      "dataset": "trec-text.terms_no_suffixes_small",
+      "variant": "native128",
+      "keys": 50000,
+      "build_ms": 108.38,
+      "hit_ns": 284.336,
+      "miss_ns": 207.108,
+      "bits_per_key": 22.831,
+      "nodes": 55261.0,
+      "mean_collapsed_levels": 3.64778
+    },
+    {
+      "dataset": "trec-text.terms_no_suffixes_small",
+      "variant": "bit256_same_layout",
+      "keys": 50000,
+      "build_ms": 126.508,
+      "hit_ns": 319.245,
+      "miss_ns": 233.545,
+      "bits_per_key": 22.831,
+      "nodes": 55261.0,
+      "mean_collapsed_levels": 3.64778
+    },
+    {
+      "dataset": "trec-text.terms_no_suffixes_small",
+      "variant": "bit256_extended",
+      "keys": 50000,
+      "build_ms": 355.903,
+      "hit_ns": 318.852,
+      "miss_ns": 244.771,
+      "bits_per_key": 22.8834,
+      "nodes": 55250.0,
+      "mean_collapsed_levels": 3.65901
+    }
+  ]
+}

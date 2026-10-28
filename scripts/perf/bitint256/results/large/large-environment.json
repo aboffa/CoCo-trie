@@ -1,0 +1,86 @@
+{
+  "cpu": 0,
+  "trials": 3,
+  "memory_limit_mib": 4096,
+  "llc_bytes": 25165824,
+  "cold_queries": 64,
+  "warm_samples": 7,
+  "warm_passes": 1,
+  "max_queries": 100000,
+  "timestamp_utc": "2026-10-28T19:55:39Z",
+  "cases": [
+    [
+      "hits-1m-SearchPhrase",
+      "fixed",
+      "/tmp/coco-large-data/hits-1m-SearchPhrase.keys",
+      0
+    ],
+    [
+      "hits-1m-Title",
+      "fixed",
+      "/tmp/coco-large-data/hits-1m-Title.keys",
+      0
+    ],
+    [
+      "hits-1m-URL",
+      "fixed",
+      "/tmp/coco-large-data/hits-1m-URL.keys",
+      0
+    ],
+    [
+      "hits-spread-SearchPhrase",
+      "fixed",
+      "/tmp/coco-large-data/hits-spread-SearchPhrase.keys",
+      0
+    ],
+    [
+      "hits-spread-Title",
+      "fixed",
+      "/tmp/coco-large-data/hits-spread-Title.keys",
+      0
+    ],
+    [
+      "hits-spread-URL",
+      "fixed",
+      "/tmp/coco-large-data/hits-spread-URL.keys",
+      0
+    ],
+    [
+      "otel-100k-Body",
+      "fixed",
+      "/tmp/coco-large-data/otel-100k-Body.keys",
+      0
+    ],
+    [
+      "lower40-64000",
+      "fixed",
+      "random:lower:40",
+      64000
+    ],
+    [
+      "lower40-1000000",
+      "fixed",
+      "random:lower:40",
+      1000000
+    ],
+    [
+      "lower40-4000000",
+      "fixed",
+      "random:lower:40",
+      4000000
+    ],
+    [
+      "trec-full",
+      "optimized",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/trec-text.terms_no_suffixes_small",
+      100000000
+    ],
+    [
+      "ids-full",
+      "optimized",
+      "/home/boffa/CLionProjects/CoCo-trie/dataset/customer_id_column.txt.sorted_no_suffixes_small",
+      100000000
+    ]
+  ],
+  "compiler": "Ubuntu clang version 21.1.8 (6ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-21/bin\n"
+}

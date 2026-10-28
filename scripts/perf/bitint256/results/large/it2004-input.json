@@ -1,0 +1,13 @@
+{
+  "source": "scripts/perf/bitint256/work-large/it-2004.urls.gz",
+  "sampling": "First complete records up to byte cap; not a random sample",
+  "max_input_bytes": 500000000,
+  "sampled_input_bytes": 499999960,
+  "rows": 6116714,
+  "unique_keys": 6116714,
+  "escaped_rows": 65095,
+  "key_bytes": 494013686,
+  "max_length": 2020,
+  "sha256": "ba8829064b2e208bf3faa3a0ff005314984d7b04fa363e7e6bac7830ee12c152",
+  "peak_rss_kib": 1096276
+}

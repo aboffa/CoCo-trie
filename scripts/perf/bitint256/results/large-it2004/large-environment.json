@@ -1,0 +1,20 @@
+{
+  "cpu": 0,
+  "trials": 3,
+  "memory_limit_mib": 4096,
+  "llc_bytes": 25165824,
+  "cold_queries": 32,
+  "warm_samples": 7,
+  "warm_passes": 1,
+  "max_queries": 100000,
+  "timestamp_utc": "2026-10-28T20:01:54Z",
+  "cases": [
+    [
+      "it2004-500MB",
+      "fixed",
+      "scripts/perf/bitint256/work-large/it-2004-500MB.keys",
+      "0"
+    ]
+  ],
+  "compiler": "Ubuntu clang version 21.1.8 (6ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-21/bin\n"
+}

@@ -1,0 +1,13 @@
+{
+  "compiler": "Ubuntu clang version 23.1.5 (++20261023092600+395ba2c4d274-1~exp1~20261023092610.88)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-23/bin\n",
+  "flags": [
+    "-O3",
+    "-DNDEBUG",
+    "-march=native",
+    "-std=gnu++20"
+  ],
+  "cpu_affinity": 0,
+  "process_trials": 1,
+  "timing_samples": 7,
+  "note": "Supplementary microbenchmark cross-check only; not the compiler used for trie comparisons."
+}

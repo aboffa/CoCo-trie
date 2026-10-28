@@ -1,0 +1,24 @@
+[
+  {
+    "name": "it2004-500MB",
+    "policy": "fixed",
+    "width": "128",
+    "returncode": 0,
+    "stderr": "",
+    "keys": "6116714",
+    "build_seconds": "1.32642",
+    "peak_rss_kib": "1060600",
+    "node_object_bytes": "272"
+  },
+  {
+    "name": "it2004-500MB",
+    "policy": "fixed",
+    "width": "256",
+    "returncode": 0,
+    "stderr": "",
+    "keys": "6116714",
+    "build_seconds": "1.36075",
+    "peak_rss_kib": "1184288",
+    "node_object_bytes": "272"
+  }
+]
