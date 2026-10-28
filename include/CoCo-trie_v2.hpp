@@ -14,7 +14,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma once
+
 #include <queue>
+#include "uncompacted_trie.hpp"
 #include "louds_sux.hpp"
 #include "CoCo-trie_v1.hpp"
 
@@ -26,7 +29,10 @@ template<uint8_t MIN_L = 1,
         typename rank00_type = sdsl::rank_support_v<0, 2>,
         typename select0_type = sux::bits::SimpleSelectZero<>>
 class CoCo_v2 {
+    alphabet_config alphabet_;
+    bool root_terminal_ = false;
 public:
+    const alphabet_config& alphabet() const { return alphabet_; }
     using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
     using CoCo_v1_t = CoCo_v1<MIN_L, code_type, MAX_L_THRS, space_relaxation, rank1_type, rank00_type, select0_type>;
 
@@ -40,7 +46,7 @@ public:
 
     size_t bits_for_L = log_universe((uint64_t) MAX_L_THRS);
 
-    size_t log_sigma = log_universe(ALPHABET_SIZE);
+    size_t log_sigma = log_universe(alphabet_.size);
 
     template<typename root_type>
     void build_CoCo_from_uncompacted_trie(root_type root) {
@@ -83,14 +89,14 @@ public:
                         if (is_remapped) {
                             first_code = utrie_t::enc_real(child_string,
                                                            node->l_idx,
-                                                           node->alphamaps[node->l_idx]);
-                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, ALPHABET_SIZE);
+                                                           node->alphamaps[node->l_idx], alphabet_);
+                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, alphabet_.size);
                             size_t bit_first_code_val = bits_first_code<MIN_L, code_type>(
                                     node->alphamaps[node->l_idx].rankmax(),
                                     node->l_idx);
                             bvb.append_bits(first_code, bit_first_code_val);
                         } else {
-                            first_code = utrie_t::enc(child_string, node->l_idx);
+                            first_code = utrie_t::enc(child_string, node->l_idx, alphabet_);
                             bvb.append_bits(first_code, log_sigma * (node->l_idx + MIN_L));
                         }
                     } else {
@@ -99,7 +105,7 @@ public:
                             if (is_remapped) {
                                 new_code = utrie_t::enc_real(child_string,
                                                              node->l_idx,
-                                                             node->alphamaps[node->l_idx]);
+                                                             node->alphamaps[node->l_idx], alphabet_);
                                 assert(new_code > first_code);
                                 // we use delta come with respect first_code
                                 new_code -= first_code;
@@ -108,7 +114,7 @@ public:
                                 assert(new_code <= node->u_vec_real[node->l_idx]);
 
                             } else {
-                                new_code = utrie_t::enc(child_string, node->l_idx);
+                                new_code = utrie_t::enc(child_string, node->l_idx, alphabet_);
                                 assert(new_code > first_code);
                                 // we use delta come with respect first_code
                                 new_code -= first_code;
@@ -182,11 +188,15 @@ public:
         load(in);
     };
 
-    CoCo_v2(const std::vector<std::string> &dataset, size_t l_fixed = 0) {
-        utrie_t uncompacted;
+
+    CoCo_v2(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset)) {
+        utrie_t uncompacted(alphabet_);
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
             uncompacted.insert(dataset[i]);
+
+        root_terminal_ = uncompacted.root->isEndOfWord;
+        if (uncompacted.root->children.empty()) return;
 
         // computing the best number of levels to collapse into the nodes
         uncompacted.space_cost_all_nodes(l_fixed);
@@ -198,22 +208,25 @@ public:
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
 
-        bits_for_L = log_universe((uint64_t) uncompacted.max_l_idx);
+        bits_for_L = log_universe(std::max<uint64_t>(1, uncompacted.max_l_idx));
         build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
-    CoCo_v2(utrie_t &uncompacted) {
+    CoCo_v2(utrie_t &uncompacted) : alphabet_(uncompacted.alphabet()) {
+        root_terminal_ = uncompacted.root->isEndOfWord;
+        if (uncompacted.root->children.empty()) return;
         topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(
                 uncompacted.global_number_nodes_CoCo);
         pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
-        bits_for_L = log_universe((uint64_t) uncompacted.max_l_idx);
+        bits_for_L = log_universe(std::max<uint64_t>(1, uncompacted.max_l_idx));
         build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
     // return a unique id of the string to_search or -1 if it does not exist
     size_t look_up(const std::string &to_search) const {
+        if (!topology) return to_search.empty() && root_terminal_ ? 0 : size_t(-1);
         size_t internal_rank = 0; // number of internal nodes before bv_index (initially refers to the root)
         size_t node_rank = 0; // number of nodes before  bv_index (initially refers to the root)
         size_t bv_index = louds_sux<>::root_idx; // position in the bv (initially refers to the root)
@@ -235,20 +248,21 @@ public:
             code_type to_search_code = 0;
             uint128_t alphamap_uint128 = 0;
             substr = to_search_view.substr(scanned_chars, std::min(l + MIN_L, to_search_view.size()));
+            if (!alphabet_.contains(substr)) return size_t(-1);
             if (is_remapped) { // remap
-                alphamap_uint128 = it.take128(ALPHABET_SIZE);
+                alphamap_uint128 = it.take128(alphabet_.size);
                 assert(alphamap_uint128 != 0);
                 alphamap am(alphamap_uint128);
                 // check if all the characters in the wanted string are in the subtrie rooted in the current node
-                if (!am.check_chars(substr)) {
+                if (!am.check_chars(substr, alphabet_.min_char)) {
                     return -1;
                 }
                 size_t bits_first_code_local_as = bits_first_code<MIN_L, code_type>(am.rankmax(), l);
                 first_code = it.take128(bits_first_code_local_as);
-                to_search_code = utrie_t::enc_real(substr, l, am);
+                to_search_code = utrie_t::enc_real(substr, l, am, alphabet_);
             } else { // no remap
                 first_code = it.take128(log_sigma * (l + MIN_L));
-                to_search_code = utrie_t::enc(substr, l);
+                to_search_code = utrie_t::enc(substr, l, alphabet_);
             }
             assert(first_code != code_type(0));
             if (to_search_code < first_code) {
@@ -340,7 +354,9 @@ public:
         }
     }
 
-    size_t size_in_bits() {
+
+    size_t size_in_bits() const {
+        if (!topology) return sizeof(*this) * CHAR_BIT;
         size_t to_return = 0;
         to_return += topology->size_in_bits();
         to_return += internal_variable->size();
@@ -350,41 +366,84 @@ public:
     }
 
 
-    size_t serialize(std::ostream &out) {
-        size_t to_return = 0;
-        out.write(reinterpret_cast<const char *>(&num_child_root), sizeof(size_t));
-        out.write(reinterpret_cast<const char *>(&bits_for_L), sizeof(size_t));
-        out.write(reinterpret_cast<const char *>(&log_sigma), sizeof(size_t));
-        to_return += (3 * sizeof(size_t));
-
-        to_return += pointers_to_encoding->serialize(out);
-        to_return += topology->bv.serialize(out);
-        to_return += internal_variable->serialize(out);
-
+    // Versioned header; the succinct payload remains native-endian.
+    size_t serialize(std::ostream &out) const {
+        constexpr char magic[8] = {'C', 'O', 'C', 'O', 'T', 'R', '2', '\0'};
+        const uint8_t metadata[] = {MIN_L, sizeof(code_type),
+            static_cast<uint8_t>(alphabet_.min_char), static_cast<uint8_t>(alphabet_.size),
+            static_cast<uint8_t>((topology ? 1 : 0) | (root_terminal_ ? 2 : 0)), sizeof(size_t)};
+        out.write(magic, sizeof(magic));
+        out.write(reinterpret_cast<const char*>(metadata), sizeof(metadata));
+        size_t to_return = sizeof(magic) + sizeof(metadata);
+        if (topology) {
+            out.write(reinterpret_cast<const char *>(&num_child_root), sizeof(size_t));
+            out.write(reinterpret_cast<const char *>(&bits_for_L), sizeof(size_t));
+            out.write(reinterpret_cast<const char *>(&log_sigma), sizeof(size_t));
+            to_return += 3 * sizeof(size_t);
+            to_return += pointers_to_encoding->serialize(out);
+            to_return += topology->bv.serialize(out);
+            to_return += internal_variable->serialize(out);
+        }
+        if (!out) throw std::runtime_error("Failed to write CoCo-trie");
         return to_return;
     }
 
     void load(std::istream &in) {
-        size_t tmp;
-        in.read((char *) &tmp, sizeof(size_t));
-        num_child_root = tmp;
+        constexpr char magic[8] = {'C', 'O', 'C', 'O', 'T', 'R', '2', '\0'};
+        char actual_magic[8] = {};
+        uint8_t metadata[6] = {};
+        in.read(actual_magic, sizeof(actual_magic));
+        if (!in || std::memcmp(magic, actual_magic, sizeof(magic)) != 0)
+            throw std::runtime_error("Invalid or legacy CoCo-trie file; rebuild with the versioned format");
+        in.read(reinterpret_cast<char*>(metadata), sizeof(metadata));
+        if (!in || metadata[0] != MIN_L || metadata[1] != sizeof(code_type) ||
+            metadata[4] > 3 || metadata[5] != sizeof(size_t))
+            throw std::runtime_error("Incompatible CoCo-trie header");
+        alphabet_config alphabet{char(metadata[2]), metadata[3]};
+        alphabet.validate();
+        const bool has_topology = metadata[4] & 1;
+        const bool root_terminal = metadata[4] & 2;
+        if (!has_topology) {
+            topology.reset();
+            pointers_to_encoding.reset();
+            internal_variable.reset();
+            alphabet_ = alphabet;
+            root_terminal_ = root_terminal;
+            num_child_root = 0;
+            bits_for_L = 1;
+            log_sigma = log_universe(alphabet.size);
+            return;
+        }
 
-        in.read((char *) &tmp, sizeof(size_t));
-        bits_for_L = tmp;
+        size_t children = 0, l_bits = 0, sigma_bits = 0;
+        in.read(reinterpret_cast<char*>(&children), sizeof(size_t));
+        in.read(reinterpret_cast<char*>(&l_bits), sizeof(size_t));
+        in.read(reinterpret_cast<char*>(&sigma_bits), sizeof(size_t));
+        if (!in || children == 0 || l_bits == 0 || l_bits > NUM_BIT_FOR_L ||
+            sigma_bits != log_universe(alphabet.size))
+            throw std::runtime_error("Invalid CoCo-trie metadata");
 
-        in.read((char *) &tmp, sizeof(size_t));
-        log_sigma = tmp;
-
-        sdsl::int_vector<> tmp_int_vector;
-        tmp_int_vector.load(in);
-        pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(tmp_int_vector);
-
-        sdsl::bit_vector tmp_louds_bv;
-        tmp_louds_bv.load(in);
-        assert(tmp_louds_bv.size() != 0);
-        topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(tmp_louds_bv);
-
+        auto pointers = std::make_unique<sdsl::int_vector<>>();
+        pointers->load(in);
+        if (!in || pointers->empty()) throw std::runtime_error("Invalid CoCo-trie pointers");
+        sdsl::bit_vector topology_bits;
+        topology_bits.load(in);
+        if (!in || topology_bits.size() < 3) throw std::runtime_error("Invalid CoCo-trie topology");
         succinct::bit_vector_builder bvb(in);
-        internal_variable = std::make_unique<succinct::bit_vector>(&bvb);
+        if (!in || bvb.size() == 0) throw std::runtime_error("Invalid CoCo-trie encoding");
+        for (size_t i = 0; i < pointers->size(); ++i) {
+            if ((*pointers)[i] >= bvb.size() || (i > 0 && (*pointers)[i] <= (*pointers)[i - 1]))
+                throw std::runtime_error("Invalid CoCo-trie encoding offset");
+        }
+        auto loaded_topology = std::make_unique<louds_sux<rank1_type, rank00_type, select0_type>>(topology_bits);
+        auto encoding = std::make_unique<succinct::bit_vector>(&bvb);
+        alphabet_ = alphabet;
+        root_terminal_ = root_terminal;
+        num_child_root = children;
+        bits_for_L = l_bits;
+        log_sigma = sigma_bits;
+        pointers_to_encoding = std::move(pointers);
+        topology = std::move(loaded_topology);
+        internal_variable = std::move(encoding);
     }
 };

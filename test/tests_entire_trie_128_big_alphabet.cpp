@@ -26,11 +26,11 @@
 #include "test_trie.hpp"
 
 std::vector<std::string> filenames = {
-        "../../dataset/british-english.txt_no_suffixes_small",
-        "../../dataset/proteins.distinct_no_suffixes_small",
-        "../../dataset/trec-text.terms_no_suffixes_small",
-        "../../dataset/it-2004.urls_no_suffixes_small",
-        "../../dataset/dna-k-mer.txt_no_suffixes_small"
+        COCO_DATASET_DIR "/british-english.txt_no_suffixes_small",
+        COCO_DATASET_DIR "/proteins.distinct_no_suffixes_small",
+        COCO_DATASET_DIR "/trec-text.terms_no_suffixes_small",
+        COCO_DATASET_DIR "/it-2004.urls_no_suffixes_small",
+        COCO_DATASET_DIR "/dna-k-mer.txt_no_suffixes_small"
 };
 
 TEST_CASE("Test CoCo_trie l fixed uint128_t", "") {

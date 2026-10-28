@@ -78,13 +78,8 @@ namespace succinct {
         inline int clz_u128(uint128_t u) {
             uint64_t hi = u >> 64;
             uint64_t lo = (uint64_t) u;
-            int retval[3] = {
-                    __builtin_clzll(hi),
-                    __builtin_clzll(lo) + 64,
-                    128
-            };
-            int idx = !hi + ((!lo) & (!hi));
-            return retval[idx];
+            if (hi) return __builtin_clzll(hi);
+            return lo ? __builtin_clzll(lo) + 64 : 128;
         }
 
         __INTRIN_INLINE bool bsr128(unsigned long *const index, const uint128_t mask) {

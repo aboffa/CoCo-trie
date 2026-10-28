@@ -14,7 +14,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma once
+
 #include <queue>
+#include "uncompacted_trie.hpp"
 #include "dfuds.hpp"
 #include "CoCo-trie_v2.hpp"
 
@@ -25,7 +28,10 @@ template<uint8_t MIN_L = 1,
         typename bp_support = sdsl::bp_support_g<>,
         typename rank_support00 = sdsl::rank_support_v<0, 2>>
 class CoCo_dfuds {
+    alphabet_config alphabet_;
+    bool root_terminal_ = false;
 public:
+    const alphabet_config& alphabet() const { return alphabet_; }
     using utrie_t = Trie_lw<MIN_L, code_type, MAX_L_THRS, space_relaxation>;
     using CoCo_v1_t = CoCo_v1<>;
     using topology_t = dfuds<bp_support, rank_support00>;
@@ -40,7 +46,7 @@ public:
 
     size_t bits_for_L = log_universe((uint64_t) MAX_L_THRS);
 
-    uint8_t log_sigma = log_universe(ALPHABET_SIZE);
+    uint8_t log_sigma = log_universe(alphabet_.size);
 
     template<typename root_type>
     void build_CoCo_from_uncompacted_trie(root_type root) {
@@ -86,14 +92,14 @@ public:
                         if (is_remapped) {
                             first_code = utrie_t::enc_real(child_string,
                                                            node->l_idx,
-                                                           node->alphamaps[node->l_idx]);
-                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, ALPHABET_SIZE);
+                                                           node->alphamaps[node->l_idx], alphabet_);
+                            bvb.append_bits(node->alphamaps[node->l_idx].bitmap, alphabet_.size);
                             size_t bit_first_code_val = bits_first_code<MIN_L, code_type>(
                                     node->alphamaps[node->l_idx].rankmax(),
                                     node->l_idx);
                             bvb.append_bits(first_code, bit_first_code_val);
                         } else {
-                            first_code = utrie_t::enc(child_string, node->l_idx);
+                            first_code = utrie_t::enc(child_string, node->l_idx, alphabet_);
                             bvb.append_bits(first_code, log_sigma * (node->l_idx + MIN_L));
                         }
                     } else {
@@ -102,7 +108,7 @@ public:
                             if (is_remapped) {
                                 new_code = utrie_t::enc_real(child_string,
                                                              node->l_idx,
-                                                             node->alphamaps[node->l_idx]);
+                                                             node->alphamaps[node->l_idx], alphabet_);
                                 assert(new_code > first_code);
                                 // we use delta come with respect first_code
                                 new_code -= first_code;
@@ -111,7 +117,7 @@ public:
                                 assert(new_code <= node->u_vec_real[node->l_idx]);
 
                             } else {
-                                new_code = utrie_t::enc(child_string, node->l_idx);
+                                new_code = utrie_t::enc(child_string, node->l_idx, alphabet_);
                                 assert(new_code > first_code);
                                 // we use delta come with respect first_code
                                 new_code -= first_code;
@@ -181,11 +187,14 @@ public:
         assert(internal_variable->size() > 0);
     }
 
-    CoCo_dfuds(std::vector<std::string> &dataset, size_t l_fixed = 0) {
-        utrie_t uncompacted;
+    CoCo_dfuds(const std::vector<std::string> &dataset, size_t l_fixed = 0) : alphabet_(alphabet_config::from_dataset(dataset)) {
+        utrie_t uncompacted(alphabet_);
         // filling the uncompacted trie
         for (int i = 0; i < dataset.size(); i++)
             uncompacted.insert(dataset[i]);
+
+        root_terminal_ = uncompacted.root->isEndOfWord;
+        if (uncompacted.root->children.empty()) return;
 
         // computing the best number of levels to collapse into the nodes
         uncompacted.space_cost_all_nodes(l_fixed);
@@ -197,22 +206,25 @@ public:
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
 
-        bits_for_L = log_universe((uint64_t) uncompacted.max_l_idx);
+        bits_for_L = log_universe(std::max<uint64_t>(1, uncompacted.max_l_idx));
         build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
-    CoCo_dfuds(utrie_t &uncompacted) {
+    CoCo_dfuds(utrie_t &uncompacted) : alphabet_(uncompacted.alphabet()) {
+        root_terminal_ = uncompacted.root->isEndOfWord;
+        if (uncompacted.root->children.empty()) return;
         topology = std::make_unique<topology_t>(
                 uncompacted.global_number_nodes_CoCo);
         pointers_to_encoding = std::make_unique<sdsl::int_vector<>>(uncompacted.global_number_nodes_CoCo);
 
         num_child_root = 1 + uncompacted.root->n_vec[uncompacted.root->l_idx];
-        bits_for_L = log_universe((uint64_t) uncompacted.max_l_idx);
+        bits_for_L = log_universe(std::max<uint64_t>(1, uncompacted.max_l_idx));
         build_CoCo_from_uncompacted_trie(uncompacted.root);
     }
 
     // return a unique id for a string to_search or -1 if it does not exist
     size_t look_up(const std::string &to_search) const {
+        if (!topology) return to_search.empty() && root_terminal_ ? 0 : size_t(-1);
         size_t internal_rank = 0; // number of internal nodes before bv_index (initially refers to the root)
         size_t node_rank = 0; // number of nodes before  bv_index (initially refers to the root)
         size_t bv_index = topology_t::root_idx; // position in the bv (initially refers to the root)
@@ -234,20 +246,21 @@ public:
             code_type to_search_code = 0;
             uint128_t alphamap_uint128 = 0;
             substr = to_search_view.substr(scanned_chars, std::min(l + MIN_L, to_search_view.size()));
+            if (!alphabet_.contains(substr)) return size_t(-1);
             if (is_remapped) { // remap
-                alphamap_uint128 = it.take128(ALPHABET_SIZE);
+                alphamap_uint128 = it.take128(alphabet_.size);
                 assert(alphamap_uint128 != 0);
                 alphamap am(alphamap_uint128);
                 // check if all the characters in the wanted string are in the subtrie rooted in the current node
-                if (!am.check_chars(substr)) {
+                if (!am.check_chars(substr, alphabet_.min_char)) {
                     return -1;
                 }
                 size_t bits_first_code_local_as = bits_first_code<MIN_L, code_type>(am.rankmax(), l);
                 first_code = it.take128(bits_first_code_local_as);
-                to_search_code = utrie_t::enc_real(substr, l, am);
+                to_search_code = utrie_t::enc_real(substr, l, am, alphabet_);
             } else { // no remap
                 first_code = it.take128(log_sigma * (l + MIN_L));
-                to_search_code = utrie_t::enc(substr, l);
+                to_search_code = utrie_t::enc(substr, l, alphabet_);
             }
             assert(first_code != code_type(0));
             if (to_search_code < first_code) {
@@ -339,7 +352,8 @@ public:
         }
     }
 
-    size_t size_in_bits() {
+    size_t size_in_bits() const {
+        if (!topology) return sizeof(*this) * CHAR_BIT;
         size_t to_return = 0;
         to_return += topology->size_in_bits();
         to_return += internal_variable->size();

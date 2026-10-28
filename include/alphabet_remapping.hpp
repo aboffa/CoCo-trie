@@ -14,6 +14,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma once
+
 struct alphamap {
     typedef unsigned __int128 uint128_t;
     uint128_t bitmap;
@@ -28,6 +30,7 @@ struct alphamap {
 
     template<bool b>
     inline void set_bit(size_t pos) {
+        if (pos >= 128) throw std::out_of_range("alphabet bitmap position");
         if constexpr(b == 1)
             this->bitmap |= (uint128_t(1) << pos);
         else
@@ -42,11 +45,12 @@ struct alphamap {
     }
 
     inline size_t get_bit(size_t pos) const {
-        return (uint8_t) ((this->bitmap >> pos) & 0x1);
+        return pos < 128 ? (uint8_t) ((this->bitmap >> pos) & 0x1) : 0;
     }
 
     // returns the number of 1 in [0,pos)
     inline size_t rank(size_t pos) const {
+        if (pos >= 128) return rankmax();
         uint128_t mask = (uint128_t(1) << pos) - 1;
         return std::popcount(bitmap & mask);
     }
@@ -55,9 +59,9 @@ struct alphamap {
         return std::popcount(bitmap);
     }
 
-    bool check_chars(std::string_view s) const {
+    bool check_chars(std::string_view s, char min_char = MIN_CHAR) const {
         for (auto c: s) {
-            if ((get_bit(c - MIN_CHAR)) == 0) {
+            if ((get_bit(int(static_cast<unsigned char>(c)) - int(static_cast<unsigned char>(min_char)))) == 0) {
                 return false;
             }
         }

@@ -23,13 +23,7 @@
 
 int main() {
     std::vector<std::string> dataset = {"compressed", "data", "structure", "trie"};
-    assert(std::is_sorted(dataset.begin(), dataset.end()));
-    datasetStats ds = dataset_stats_from_vector(dataset);
-
-    // Global variables
-    MIN_CHAR = ds.get_min_char();
-    ALPHABET_SIZE = ds.get_alphabet_size();
-
+    // Each dictionary infers and retains its own alphabet.
     CoCo_v2<> coco(dataset);
 
     coco.size_in_bits(); // return number of bits

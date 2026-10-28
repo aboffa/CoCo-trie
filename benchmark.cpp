@@ -32,7 +32,7 @@ void usage(char **argv) {
 }
 
 template<typename uncompact_trie_t, typename CoCo_trie_t>
-void test_trie(uncompact_trie_t &trie, uint8_t l_fixed, const std::vector<std::string> &queries) {
+void test_trie(uncompact_trie_t &trie, uint8_t l_fixed, const std::vector<std::string> &queries, double insertion_seconds) {
     auto start = timer::now();
     trie.space_cost_all_nodes(l_fixed);
     double avg_jump = 0;
@@ -52,7 +52,7 @@ void test_trie(uncompact_trie_t &trie, uint8_t l_fixed, const std::vector<std::s
     trie.build_actual_CoCo_children();
 
     CoCo_trie_t ct(trie);
-    std::cout << "," << (std::chrono::duration_cast<std::chrono::seconds>(timer::now() - start).count());
+    std::cout << "," << (insertion_seconds + std::chrono::duration<double>(timer::now() - start).count());
     std::cout << "," << query_time([&](auto &s) { return ct.look_up(s); }, queries);
     std::cout << "," << float(ct.size_in_bits()) / (1000000. * CHAR_BIT) << "," << avg_jump;
 
@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
         std::vector<std::string> dataset;
         datasetStats ds = load_data_from_file(dataset, filename_path);
 
+
         if (dataset.size() < 2) {
             std::cout << "dataset must contain at least two strings" << std::endl;
             exit(EXIT_FAILURE);
@@ -102,11 +103,13 @@ int main(int argc, char **argv) {
         });
 
         static_for<0, 21, 5>([&](auto space_relaxations_percentage) {
-            Trie_lw<1, uint128_t, MAX_L_THRS, space_relaxations_percentage> trie;
+            auto insertion_start = timer::now();
+            Trie_lw<1, uint128_t, MAX_L_THRS, space_relaxations_percentage> trie(alphabet_config::from_dataset(dataset));
             trie.set_filename(filename);
             // Construct trie
             for (int i = 0; i < dataset.size(); i++)
                 trie.insert(dataset[i]);
+            const double insertion_seconds = std::chrono::duration<double>(timer::now() - insertion_start).count();
 
             qidx = 0;
             static_for<start_q_perc, end_q_perc, step_q_perc>([&](auto percentage) {
@@ -115,11 +118,12 @@ int main(int argc, char **argv) {
                 test_trie<Trie_lw<1, uint128_t, MAX_L_THRS, space_relaxations_percentage>,
                         CoCo_v2<1, uint128_t, MAX_L_THRS, space_relaxations_percentage,
                                 sdsl::rank_support_v<1>, sdsl::rank_support_v<0, 2>, sux::bits::SimpleSelectZero<>>>
-                        (trie, 0, queries[qidx]);
+                        (trie, 0, queries[qidx], insertion_seconds);
                 qidx++;
                 std::cout << "," << std::to_string(percentage) << std::endl;
             });
         });
+
     }
     return 0;
 }

@@ -26,9 +26,9 @@
 #include "test_trie.hpp"
 
 std::vector<std::string> filenames = {
-        "../../dataset/proteins.distinct_no_suffixes_small",
-        "../../dataset/dna-k-mer.txt_no_suffixes_small",
-        "../../dataset/customer_id_column.txt.sorted_no_suffixes_small"
+        COCO_DATASET_DIR "/proteins.distinct_no_suffixes_small",
+        COCO_DATASET_DIR "/dna-k-mer.txt_no_suffixes_small",
+        COCO_DATASET_DIR "/customer_id_column.txt.sorted_no_suffixes_small"
 };
 
 TEST_CASE("Test CoCo_trie l fixed uint128_t", "") {

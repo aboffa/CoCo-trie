@@ -33,12 +33,17 @@
 #include <vector>
 #include <chrono>
 #include <iomanip>
+#include <string>
+#include <string_view>
+#include <stdexcept>
+#include <algorithm>
+#include <unordered_set>
 
 #include "synthetic.hpp"
 
-#include "../lib/ds2i/succinct/bit_vector.hpp"
-#include "../lib/ds2i/integer_codes.hpp"
-#include "../lib/ds2i/global_parameters.hpp"
+#include <succinct/bit_vector.hpp>
+#include <integer_codes.hpp>
+#include <global_parameters.hpp>
 
 #include "MAX_L_config.h"
 
@@ -65,8 +70,47 @@ enum node_type {
 
 
 // default values
-char MIN_CHAR = 'a';
-size_t ALPHABET_SIZE = 96;
+inline char MIN_CHAR = 'a';
+inline size_t ALPHABET_SIZE = 27;
+
+// The radix includes one terminator in addition to the character interval.
+// Stored keys use 7-bit bytes; arbitrary query bytes are rejected as misses.
+struct alphabet_config {
+    char min_char = 'a';
+    size_t size = 27;
+
+    void validate() const {
+        if (min_char < 0 || size < 2 || size > 127 ||
+            static_cast<unsigned char>(min_char) + size - 2 > 127) {
+            throw std::invalid_argument("CoCo-trie requires a 7-bit alphabet with span at most 126");
+        }
+    }
+
+    bool contains(std::string_view s) const {
+        for (unsigned char c : s) {
+            const int offset = int(c) - int(static_cast<unsigned char>(min_char));
+            if (offset < 0 || size_t(offset) >= size - 1) return false;
+        }
+        return true;
+    }
+
+    static alphabet_config from_dataset(const std::vector<std::string>& dataset) {
+        unsigned lo = 128, hi = 0;
+        for (const auto& key : dataset) {
+            for (unsigned char c : key) {
+                if (c > 127) throw std::invalid_argument("CoCo-trie keys must contain only 7-bit bytes");
+                lo = std::min(lo, unsigned(c));
+                hi = std::max(hi, unsigned(c));
+            }
+        }
+        alphabet_config result = lo == 128 ? alphabet_config{} : alphabet_config{char(lo), hi - lo + 2};
+        result.validate();
+        return result;
+    }
+
+    // Compatibility default for the incremental builder and standalone encoders.
+    static alphabet_config legacy() { return {MIN_CHAR, ALPHABET_SIZE}; }
+};
 
 // because we are using LOUDS + constant time rank/select ds
 // if num nodes = n, space used by the sdsl::implementaion of LOUDS is bounded by
@@ -77,8 +121,8 @@ size_t ALPHABET_SIZE = 96;
 // instead using sdsl::rank_support_v5<1>
 // 2n + 1 + (0.13 (0.0625 * 2) for rank1 + 0.13 for rank00, + 0.2 for select0) n = 2.39n + 1.
 // experimentally seem to be bounded by 2.5
-bool is_rank_support_v_or_v5 = true;
-float multiplier_for_topology = (is_rank_support_v_or_v5) ? 3.2 : 2.39;
+inline bool is_rank_support_v_or_v5 = true;
+inline float multiplier_for_topology = (is_rank_support_v_or_v5) ? 3.2 : 2.39;
 
 const uint8_t NUM_BIT_TYPE = 3;
 const uint8_t NUM_BIT_POINTER = 38;
@@ -111,7 +155,7 @@ const size_t step_q_perc = 101;
 
 const size_t cache_line_bits = 64 * CHAR_BIT;
 
-ds2i::global_parameters params;
+inline ds2i::global_parameters params;
 
 template<uint8_t MIN_L, typename code_type>
 inline size_t bits_first_code(size_t as, uint8_t l_idx) {
@@ -185,7 +229,7 @@ struct datasetStats {
 template<typename string>
 bool checkIsPrintable(string s) {
     for (char c: s) {
-        if (!isprint(c)) {
+        if (!isprint(static_cast<unsigned char>(c))) {
             return false;
         }
     }
@@ -262,7 +306,7 @@ datasetStats dataset_stats_from_vector(std::vector<std::string> const &strings) 
             ds.min_size = std::min(strings[i].size(), ds.min_size);
         }
     }
-    assert(!strings.empty());
+    if (ds.chars.empty()) return ds;
     ds.min_char = ds.chars.begin()->first;
     ds.max_char = ds.chars.rbegin()->first;
     ds.num_strings = strings.size();
@@ -296,7 +340,7 @@ datasetStats load_data_from_file(std::vector<std::string> &strings, std::string 
             ds.min_size = std::min(line.size(), ds.min_size);
         }
     }
-    assert(!strings.empty());
+    if (ds.chars.empty()) return ds;
     ds.min_char = ds.chars.begin()->first;
     ds.max_char = ds.chars.rbegin()->first;
     ds.num_strings = strings.size();
@@ -347,25 +391,29 @@ gen_random_string(const size_t len, std::map<char, size_t> const &chars, std::mt
     return s;
 }
 
-using timer = std::chrono::high_resolution_clock;
+using timer = std::chrono::steady_clock;
 
 template<typename F, class V>
-size_t query_time(F f, const V &queries) {
+double query_time(F f, const V &queries) {
+    if (queries.empty()) return 0;
     const int TIMES = 3;
     auto start = timer::now();
-    auto cnt = 0;
+    size_t cnt = 0;
     for (auto i = 0; i < TIMES; i++) {
         for (auto &q: queries)
             cnt += f(q);
     }
     auto stop = timer::now();
     [[maybe_unused]] volatile auto tmp = cnt;
-    return (std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count() / queries.size()) / TIMES;
+    return std::chrono::duration<double, std::nano>(stop - start).count() / (double(queries.size()) * TIMES);
 }
 
 
 void get_queries(std::vector<std::string> &dataset, std::vector<std::string> &queries, datasetStats &ds,
                  size_t percentage_random = 50) {
+    if (percentage_random > 100) throw std::invalid_argument("query percentage must be at most 100");
+    const std::unordered_set<std::string> keys(dataset.begin(), dataset.end());
+    queries.clear();
     queries.reserve(dataset.size());
     std::copy(dataset.begin(), dataset.end(), std::back_inserter(queries));
     std::shuffle(queries.begin(), queries.end(), std::mt19937{1});
@@ -373,10 +421,11 @@ void get_queries(std::vector<std::string> &dataset, std::vector<std::string> &qu
     std::mt19937 re(42);
     std::uniform_int_distribution<> dis(0);
     for (int i = 0; i < size_t(double(dataset.size()) * (double(percentage_random) / 100.)); ++i) {
-        queries[i].erase(std::min<size_t>(queries[i].size() - 1, static_cast<size_t>(ds.average_lcp)),
+        queries[i].erase(std::min<size_t>(queries[i].empty() ? 0 : queries[i].size() - 1, static_cast<size_t>(ds.average_lcp)),
                          queries[i].size() - 1);
         queries[i].append(gen_random_string(static_cast<size_t>(ds.average_length), ds.chars, re, dis)
         );
+        while (keys.count(queries[i])) queries[i].push_back(ds.get_min_char());
     }
 
     if (percentage_random > 0)

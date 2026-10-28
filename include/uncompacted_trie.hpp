@@ -21,13 +21,17 @@
 #include <cassert>
 #include "utils.hpp"
 #include "alphabet_remapping.hpp"
-#include "../lib/ds2i/compact_elias_fano.hpp"
+#include <compact_elias_fano.hpp>
 
 typedef unsigned __int128 uint128_t;
 
 template<uint8_t MIN_L = 1, typename code_type = uint128_t, uint8_t MAX_L_THRS = MAX_L_THRS, uint8_t space_relaxation = 0>
 class Trie_lw {
+    alphabet_config alphabet_;
 public:
+    const alphabet_config& alphabet() const { return alphabet_; }
+    Trie_lw(const Trie_lw&) = delete;
+    Trie_lw& operator=(const Trie_lw&) = delete;
     struct TrieNode_lw {
         TrieNode_lw() {
             isEndOfWord = false;
@@ -70,13 +74,14 @@ public:
     size_t global_number_nodes_CoCo = 0;
 
     std::string filename;
-    size_t log_sigma = log_universe(ALPHABET_SIZE);
+    size_t log_sigma = log_universe(alphabet_.size);
 
     static const size_t OUR_DOLLAR_ID = 0;
 
     size_t max_l_idx = 0;
 
-    Trie_lw() {
+    explicit Trie_lw(alphabet_config alphabet = alphabet_config::legacy()) : alphabet_(alphabet) {
+        alphabet_.validate();
         root = new TrieNode_lw;
     }
 
@@ -99,6 +104,7 @@ public:
     // If the key is prefix of trie node, just
     // marks leaf node
     void insert(const std::string &key) {
+        if (!alphabet_.contains(key)) throw std::invalid_argument("key outside builder alphabet");
         TrieNode_lw *pCrawl = root;
 
         for (auto i = 0; i < key.length(); i++) {
@@ -248,7 +254,7 @@ public:
         if (node->children.empty()) {
             // add to_jump times $ (0)
             for (auto i = 0; i < to_jump; i++) {
-                enc_value *= ALPHABET_SIZE;
+                enc_value *= alphabet_.size;
             }
             return;
         }
@@ -263,8 +269,8 @@ public:
         }
         for (auto child: node->children) {
             code_type child_enc_value = enc_value;
-            child_enc_value *= ALPHABET_SIZE;
-            child_enc_value += code_type(child.first - MIN_CHAR) + 1;
+            child_enc_value *= alphabet_.size;
+            child_enc_value += code_type(child.first - alphabet_.min_char) + 1;
             compute_codes_descendents_l_recursive(child.second, next_to_jump, optpar, child_enc_value);
         }
     }
@@ -350,7 +356,7 @@ public:
         source->alphamaps.reserve(source->max_l_amap);
         source->alphamaps.emplace_back(0);
         for (auto child: source->children) {
-            size_t char_id = child.first - MIN_CHAR;
+            size_t char_id = child.first - alphabet_.min_char;
             source->alphamaps[0].template set_bit<1>(char_id);
         }
 
@@ -376,7 +382,8 @@ public:
         }
 
         assert(source->max_l_amap >= MIN_L);
-        source->max_l_fixed = std::min<size_t>(source->max_l_amap, MAX_L_THRS);
+        source->max_l_fixed = std::min({source->max_l_amap, size_t(MAX_L_THRS),
+                                        sizeof(code_type) * CHAR_BIT / log_sigma});
         assert(source->max_l_amap >= source->max_l_fixed);
         // number of levels to collapse without alphabet remapping
         const size_t DELTA_L_FIXED = source->max_l_fixed - MIN_L + 1;
@@ -447,8 +454,8 @@ public:
         std::string rightmost = extreme_string_l<false>(source, DELTA_L_AMAP);
 
         for (size_t i = 0; i < DELTA_L_AMAP; ++i) {
-            code_type leftmost_enc = enc_real<const std::string &>(leftmost, i, source->alphamaps[i]);
-            code_type rightmost_enc = enc_real<const std::string &>(rightmost, i, source->alphamaps[i]);
+            code_type leftmost_enc = enc_real<const std::string &>(leftmost, i, source->alphamaps[i], alphabet_);
+            code_type rightmost_enc = enc_real<const std::string &>(rightmost, i, source->alphamaps[i], alphabet_);
             assert(leftmost_enc <= rightmost_enc);
             min_u_real[i] = leftmost_enc;
             max_u_real[i] = rightmost_enc;
@@ -521,23 +528,23 @@ public:
                 }
 
                 if (code_type(n) == u_real) {
-                    if (ALPHABET_SIZE < space_bits_best) {
-                        space_bits_best = ALPHABET_SIZE;
+                    if (alphabet_.size < space_bits_best) {
+                        space_bits_best = alphabet_.size;
                         source->node_type_vec[i] = all_ones_amap;
                     }
                 } else {
                     size_t space_bits_packed_amap = -1, space_bits_elias_fano_amap = -1, space_bits_bitvector_amap = -1;
 
-                    space_bits_packed_amap = (n * logu_real) + ALPHABET_SIZE;
+                    space_bits_packed_amap = (n * logu_real) + alphabet_.size;
 
                     if (i < MAX_L_THRS_EF and u_div_n < MAX_U_DIV_N) {
                         space_bits_elias_fano_amap =
-                                ds2i::compact_elias_fano<code_type>::bitsize(params, u_real, n) + ALPHABET_SIZE;
+                                ds2i::compact_elias_fano<code_type>::bitsize(params, u_real, n) + alphabet_.size;
                         space_bits_elias_fano_amap += bits_delta_code(u_real);
                     }
 
                     if (u_real <= code_type(1) << 63) {
-                        space_bits_bitvector_amap = size_t(u_real) + ALPHABET_SIZE;
+                        space_bits_bitvector_amap = size_t(u_real) + alphabet_.size;
                         space_bits_bitvector_amap += (u_real / BLOCK_SIZE) * logu_real;
                     }
 
@@ -594,8 +601,8 @@ public:
             source->u_vec_real[i] = u_real;
 
             if (n == 0 or code_type(n) == u_real) {
-                if (ALPHABET_SIZE < space_bits_best) {
-                    space_bits_best = ALPHABET_SIZE;
+                if (alphabet_.size < space_bits_best) {
+                    space_bits_best = alphabet_.size;
                     source->node_type_vec[i] = all_ones_amap;
                 }
             } else {
@@ -603,10 +610,10 @@ public:
 
                 size_t space_bits_packed_amap = -1, space_bits_bitvector_amap = -1;
 
-                space_bits_packed_amap = (n * logu_real) + ALPHABET_SIZE;
+                space_bits_packed_amap = (n * logu_real) + alphabet_.size;
 
                 if (u_real <= code_type(1) << 63) {
-                    space_bits_bitvector_amap = size_t(u_real) + ALPHABET_SIZE;
+                    space_bits_bitvector_amap = size_t(u_real) + alphabet_.size;
                     size_t num_sample = u_real / BLOCK_SIZE;
                     space_bits_bitvector_amap += num_sample * logu_real;
                 }
@@ -639,6 +646,7 @@ public:
         }
         return space_cost;
     }
+
 
     // recursive version. Filling in_n and lf_n recursively
     void space_cost_recursive(
@@ -680,7 +688,7 @@ public:
         else
             ch = node->children.rbegin()->first;
         // +1 because 0 is the $
-        code_type ch_id = code_type(ch - MIN_CHAR) + code_type(1);
+        code_type ch_id = code_type(ch - alphabet_.min_char) + code_type(1);
         outvec[0] = ch_id;
         if constexpr (is_min)
             node = node->children.empty() ? nullptr : node->children.begin()->second;
@@ -701,20 +709,20 @@ public:
                         ch = aux->children.begin()->first;
                         aux = aux->children.empty() ? nullptr : aux->children.begin()->second;
                         // +1 because 0 is the $
-                        ch_id = code_type(ch - MIN_CHAR) + code_type(1);
-                        assert(ch_id <= code_type(ALPHABET_SIZE));
+                        ch_id = code_type(ch - alphabet_.min_char) + code_type(1);
+                        assert(ch_id <= code_type(alphabet_.size));
                     }
                 } else {
                     ch = aux->children.rbegin()->first;
                     aux = aux->children.empty() ? nullptr : aux->children.rbegin()->second;
                     // +1 because 0 is the $
-                    ch_id = code_type(ch - MIN_CHAR) + code_type(1);
-                    assert(ch_id <= code_type(ALPHABET_SIZE));
+                    ch_id = code_type(ch - alphabet_.min_char) + code_type(1);
+                    assert(ch_id <= code_type(alphabet_.size));
                 }
             } else {
                 ch_id = OUR_DOLLAR_ID;
             }
-            outvec[base_l] = outvec[base_l - 1] * code_type(ALPHABET_SIZE) + ch_id;
+            outvec[base_l] = outvec[base_l - 1] * code_type(alphabet_.size) + ch_id;
         }
     }
 
@@ -758,11 +766,12 @@ public:
 
     // template parameter in order to use std::string_view or const std::string &
     template<typename string>
-    static code_type enc_real(string s, size_t base_l, alphamap &amap) {
+    static code_type enc_real(string s, size_t base_l, const alphamap &amap,
+                              alphabet_config alphabet = alphabet_config::legacy()) {
         code_type result = 0;
         code_type local_universe = amap.rankmax() + 1;
         assert(!s.empty());
-        code_type codeOfChar = code_type(amap.rank(s[0] - MIN_CHAR)) + code_type(1);
+        code_type codeOfChar = code_type(amap.rank(s[0] - alphabet.min_char)) + code_type(1);
         assert(codeOfChar <= local_universe);
         result = codeOfChar;
         auto i = 1;
@@ -770,7 +779,7 @@ public:
             auto last_value = result;
             result *= local_universe;
             assert(last_value <= result);
-            codeOfChar = code_type(amap.rank(s[i] - MIN_CHAR)) + code_type(1);
+            codeOfChar = code_type(amap.rank(s[i] - alphabet.min_char)) + code_type(1);
             assert(codeOfChar <= local_universe);
             result += codeOfChar;
 
@@ -786,23 +795,24 @@ public:
 
     // template parameter in order to use std::string_view or const std::string &
     template<typename string>
-    static code_type enc(string s, size_t base_l) {
+    static code_type enc(string s, size_t base_l,
+                         alphabet_config alphabet = alphabet_config::legacy()) {
         code_type result = 0;
         assert(!s.empty());
-        code_type codeOfChar = (s[0] - MIN_CHAR) + 1;
-        assert(codeOfChar <= code_type(ALPHABET_SIZE));
+        code_type codeOfChar = (s[0] - alphabet.min_char) + 1;
+        assert(codeOfChar <= code_type(alphabet.size));
         result = codeOfChar;
         auto i = 1;
         for (; i < std::min(base_l + MIN_L, s.size()); i++) {
-            result *= code_type(ALPHABET_SIZE);
-            codeOfChar = (s[i] - MIN_CHAR) + 1;
-            assert(codeOfChar <= code_type(ALPHABET_SIZE));
+            result *= code_type(alphabet.size);
+            codeOfChar = (s[i] - alphabet.min_char) + 1;
+            assert(codeOfChar <= code_type(alphabet.size));
             result += codeOfChar;
         }
         for (; i < base_l + MIN_L; i++) {
-            result *= code_type(ALPHABET_SIZE);
+            result *= code_type(alphabet.size);
         }
-        assert(log_universe(result) <= (base_l + MIN_L) * log_universe(ALPHABET_SIZE));
+        assert(log_universe(result) <= (base_l + MIN_L) * log_universe(alphabet.size));
         assert(result != code_type(0));
         return result;
     }

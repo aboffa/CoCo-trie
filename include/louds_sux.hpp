@@ -146,7 +146,7 @@ struct louds_sux {
     size_t nextZero(const uint64_t bv_idx) const {
         uint64_t curr = (bv_idx - 1) / 64;
 
-        uint64_t window = ~bv.data()[curr] & -1ULL << (bv_idx - 1);
+        uint64_t window = ~bv.data()[curr] & (-1ULL << ((bv_idx - 1) % 64));
         window &= window - 1;
 
         while (window == 0) window = ~bv.data()[++curr];

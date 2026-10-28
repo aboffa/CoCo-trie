@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <stdexcept>
+#include <cstring>
 
 #include <boost/range.hpp>
 
@@ -187,13 +189,16 @@ namespace succinct {
         }
 
         bit_vector_builder(std::istream &in) {
-            uint64_t tmp;
-            in.read((char *) &tmp, sizeof(uint64_t));
+            uint64_t tmp = 0;
+            if (!in.read((char *) &tmp, sizeof(uint64_t)))
+                throw std::runtime_error("Truncated bit vector size");
             m_size = tmp;
             uint64_t num_words = detail::words_for(m_size);
 
             m_bits.resize(num_words, 0);
-            in.read((char *) (m_bits.data()), num_words * sizeof(uint64_t));
+            if (!in.read((char *) (m_bits.data()), num_words * sizeof(uint64_t)))
+                throw std::runtime_error("Truncated bit vector data");
+            m_cur_word = m_bits.empty() ? nullptr : &m_bits.back();
         }
 
         bits_type m_bits;
@@ -280,7 +285,7 @@ namespace succinct {
             }
             uint64_t block = pos / 64;
             uint64_t shift = pos % 64;
-            uint64_t mask = -(len == 64) | ((1ULL << len) - 1);
+            uint64_t mask = len == 64 ? ~uint64_t(0) : ((uint64_t(1) << len) - 1);
             if (shift + len <= 64) {
                 return m_bits[block] >> shift & mask;
             } else {
@@ -300,11 +305,15 @@ namespace succinct {
             return word;
         }
 
-        // unsafe and fast version of get_word, it retrieves at least 56 bits
+        // Retrieve at least 56 bits without unaligned typed loads or overreads.
         inline uint64_t get_word56(uint64_t pos) const {
-            // XXX check endianness?
+            if (pos >= m_size) return 0;
             const char *ptr = reinterpret_cast<const char *>(m_bits.data());
-            return *(reinterpret_cast<uint64_t const *>(ptr + pos / 8)) >> (pos % 8);
+            const size_t offset = pos / 8;
+            const size_t available = m_bits.size() * sizeof(uint64_t) - offset;
+            uint64_t word = 0;
+            std::memcpy(&word, ptr + offset, std::min(sizeof(word), available));
+            return word >> (pos % 8);
         }
 
         inline uint64_t predecessor0(uint64_t pos) const {

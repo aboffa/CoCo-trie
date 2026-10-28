@@ -2,34 +2,37 @@ cmake_minimum_required(VERSION 3.13)
 project(CoCo-trie)
 
 set(CMAKE_CXX_STANDARD 20)
-
-configure_file(
-        lib/ds2i/ds2i_config.hpp.in
-        lib/ds2i/ds2i_config.hpp
-        ESCAPE_QUOTES)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -pedantic")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+option(COCO_NATIVE "Optimize for the build machine's CPU" OFF)
+option(COCO_SANITIZERS "Enable address and undefined-behavior sanitizers" OFF)
+if(COCO_NATIVE)
+    add_compile_options(-march=native)
+endif()
+if(COCO_SANITIZERS)
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address,undefined)
+endif()
 
 find_package(Boost REQUIRED)
+include(cmake/Dependencies.cmake)
+include_directories(include "${COCO_DEPS_DIR}/ds2i" "${COCO_DEPS_DIR}/sux")
+add_compile_options(-Wall -pedantic)
 
-include_directories(include lib/ds2i lib/sux)
-
-add_subdirectory(lib/ds2i/succinct)
-add_subdirectory(lib/sdsl-lite)
-
-#alphabets at most 26
+# Default compaction-depth limits favor small alphabets.
 add_executable(coco-trie_bench_small_alphabet benchmark.cpp)
 target_link_libraries(coco-trie_bench_small_alphabet sdsl succinct ${Boost_LIBRARIES})
 
-#alphabets at most 95
+# Shorter compaction-depth limits for larger alphabets.
 add_executable(coco-trie_bench_big_alphabet benchmark.cpp)
 target_link_libraries(coco-trie_bench_big_alphabet sdsl succinct ${Boost_LIBRARIES})
-# this line sets the maximum alphabet size. By default alphabet size < 26
+# The actual alphabet and safe encoding depth are determined from the data.
 target_compile_definitions(coco-trie_bench_big_alphabet PRIVATE BIG_ALPHABET)
 
 add_executable(example example.cpp)
 target_link_libraries(example sdsl succinct ${Boost_LIBRARIES})
 target_compile_definitions(example PRIVATE BIG_ALPHABET)
 
-enable_testing()
-add_subdirectory(test)
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

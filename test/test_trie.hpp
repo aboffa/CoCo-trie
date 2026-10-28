@@ -34,6 +34,8 @@ void test_trie(trie_t &coco_trie, std::vector<std::string> dataset, const datase
                                look_up_results.end());
     REQUIRE(!containsDuplicates);
 
+    const std::unordered_set<std::string> keys(dataset.begin(), dataset.end());
+
     size_t not_in_set_tests = dataset.size();
 
     std::mt19937 re(42);
@@ -41,12 +43,12 @@ void test_trie(trie_t &coco_trie, std::vector<std::string> dataset, const datase
 
     for (auto i = 0; i < not_in_set_tests; ++i) {
         std::string random_str = gen_random_string(size_t(ds.average_length), re, dis);
-        REQUIRE(coco_trie.look_up(random_str) == size_t(-1));
+        REQUIRE((coco_trie.look_up(random_str) != size_t(-1)) == (keys.count(random_str) != 0));
     }
 
     for (auto i = 0; i < dataset.size(); ++i) {
         std::string random_str = dataset[i] + gen_random_string(size_t(ds.average_length), re, dis);
-        REQUIRE(coco_trie.look_up(random_str) == size_t(-1));
+        REQUIRE((coco_trie.look_up(random_str) != size_t(-1)) == (keys.count(random_str) != 0));
     }
 }
 

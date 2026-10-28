@@ -16,6 +16,7 @@
 
 
 #include <cstdio>
+#include <sstream>
 #include <string>
 #include <unordered_set>
 #include "catch.hpp"
@@ -26,11 +27,11 @@
 #include "test_trie.hpp"
 
 std::vector<std::string> filenames = {
-        "../../dataset/british-english.txt_no_suffixes_small",
-        "../../dataset/proteins.distinct_no_suffixes_small",
-        "../../dataset/trec-text.terms_no_suffixes_small",
-        "../../dataset/it-2004.urls_no_suffixes_small",
-        "../../dataset/dna-k-mer.txt_no_suffixes_small"
+        COCO_DATASET_DIR "/british-english.txt_no_suffixes_small",
+        COCO_DATASET_DIR "/proteins.distinct_no_suffixes_small",
+        COCO_DATASET_DIR "/trec-text.terms_no_suffixes_small",
+        COCO_DATASET_DIR "/it-2004.urls_no_suffixes_small",
+        COCO_DATASET_DIR "/dna-k-mer.txt_no_suffixes_small"
 };
 
 TEST_CASE("Test CoCo_v2 l<18 optimal uint128 SERIALIZE and LOAD", "") {
@@ -46,11 +47,9 @@ TEST_CASE("Test CoCo_v2 l<18 optimal uint128 SERIALIZE and LOAD", "") {
 
         CoCo_v2<> coco_trie_original(dataset);
 
-        std::ofstream outfile("/tmp/tmp_CoCo_" + filename + ".bin");
-        coco_trie_original.serialize(outfile);
-
-        std::ifstream infile("/tmp/tmp_CoCo_" + filename + ".bin");
-        CoCo_v2<> coco_trie_loaded(infile);
+        std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+        coco_trie_original.serialize(stream);
+        CoCo_v2<> coco_trie_loaded(stream);
 
         REQUIRE(coco_trie_original.num_child_root == coco_trie_loaded.num_child_root);
         REQUIRE(coco_trie_original.bits_for_L == coco_trie_loaded.bits_for_L);

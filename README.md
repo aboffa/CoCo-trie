@@ -25,16 +25,17 @@ Preliminary results appeared in the paper: [(DOI)](https://doi.org/10.1007/978-3
 
 ## Build the project 🔧
 
+Requires x86-64, a C++20 compiler with `unsigned __int128` support, CMake, and Boost headers (for example, `libboost-dev` on Debian/Ubuntu).
+
 To build the CoCo-trie:
 
 ```
 git submodule update --init --recursive
-bash ./lib/adapted_code/move.sh
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -S .. -B .
-make -j
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
 ```
+
+Dependencies and adapted headers are staged automatically under `build/_deps`; the submodule sources are left untouched. `-DCOCO_NATIVE=ON` enables CPU-specific optimization for local benchmarks.
 
 ## Run the example 🏃
 
@@ -44,12 +45,6 @@ The `example.cpp` file shows how to index and compress a vector of strings with 
 ```c++
 int main() {
     std::vector<std::string> dataset = {"compressed", "data", "structure", "trie"};
-    datasetStats ds = dataset_stats_from_vector(dataset);
-
-    // Global variables
-    MIN_CHAR = ds.get_min_char();
-    ALPHABET_SIZE = ds.get_alphabet_size();
-
     CoCo_v2<> coco(dataset);
 
     coco.size_in_bits(); // return number of bits used to store the dataset
@@ -59,12 +54,18 @@ int main() {
     coco.look_up("structure"); // returns id 3
     coco.look_up("trie"); // returns id 4
 
-    coco.look_up("SPIRE"); // returns -1, the string doesn't belong to the set
+    coco.look_up("SPIRE"); // returns size_t(-1): not found
 
     return 0;
 }
 
 ```
+
+The vector constructors infer and retain each dictionary's alphabet. Multiple dictionaries with different alphabets can coexist without changing one another's lookups. Input order does not matter; duplicates are treated as one key. Empty dictionaries, the empty string, and keys that are prefixes of other keys are supported. Lookup returns a unique topology ID, not necessarily the input position or lexicographic rank; the missing-key sentinel is `size_t(-1)`.
+
+Stored keys may contain 7-bit bytes (including embedded NUL), with a character interval spanning at most 126 byte values. Unsupported alphabets throw `std::invalid_argument`; out-of-alphabet query bytes return `size_t(-1)`. The incremental builder accepts an explicit `alphabet_config`, for example `Trie_lw<> builder(alphabet_config::from_dataset(dataset))`. The legacy globals remain defaults for that builder and standalone encoding helpers, but changing them does not affect existing tries.
+
+`CoCo_v2::serialize` writes a versioned header containing the alphabet and encoding configuration. Use binary streams. Loading does not require setting globals. Old unversioned files must be rebuilt; the payload still requires a compatible native-endian, same-word-size environment. Load only trusted index files.
 
 ## Datasets 💽
 Examples of already preprocessed small datasets are in the directory `dataset`.
@@ -85,7 +86,9 @@ To get k-mers from `dna` dataset execute the code in the script `script/extract_
 
 ## Run the benchmark 🚀
 
- To get the space/time performance run:
+The benchmark reads newline-separated printable strings. `BUILDING_TIME(s)` includes alphabet inference, insertion into the uncompacted trie, compaction, and construction of the final representation; it excludes file loading and query generation. Query time is the average over three passes, and generated miss queries are checked against the input set.
+
+To get the space/time performance run:
 ```bash
 cd build
 ./coco-trie_bench_big_alphabet ../dataset/it-2004.urls_no_suffixes_small
@@ -93,14 +96,18 @@ cd build
 ```
 
 ## Run the tests 🛫
-For executing the tests:
+Run all registered tests from any working directory:
 
 ```bash
-cd build/test/
-./tests_utils
-./tests_single_encoders_128
-./tests_entire_trie_128_big_alphabet.cpp
-./tests_entire_trie_128_small_alphabet.cpp
+ctest --test-dir build --output-on-failure
+```
+
+For assertions and sanitizer checks:
+
+```bash
+cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug -DCOCO_SANITIZERS=ON
+cmake --build build-sanitize --target tests_boundaries --parallel
+UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir build-sanitize -R tests_boundaries --output-on-failure
 ```
 
 ## License 🪪

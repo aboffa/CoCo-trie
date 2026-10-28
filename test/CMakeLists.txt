@@ -1,17 +1,14 @@
-add_executable(tests_utils main.cpp tests_utils.cpp)
-target_link_libraries(tests_utils sdsl succinct ${Boost_LIBRARIES})
-
-add_executable(tests_single_encoders_128 main.cpp tests_single_encoders_128.cpp)
-target_link_libraries(tests_single_encoders_128 sdsl succinct ${Boost_LIBRARIES})
-
-add_executable(tests_entire_trie_128_big_alphabet main.cpp tests_entire_trie_128_big_alphabet.cpp)
-target_link_libraries(tests_entire_trie_128_big_alphabet sdsl succinct ${Boost_LIBRARIES})
-target_compile_definitions(tests_entire_trie_128_big_alphabet PRIVATE BIG_ALPHABET)
-
-add_executable(tests_serialize_load main.cpp tests_serialize_load.cpp)
-target_link_libraries(tests_serialize_load sdsl succinct ${Boost_LIBRARIES})
-target_compile_definitions(tests_serialize_load PRIVATE BIG_ALPHABET)
-
-add_executable(tests_entire_trie_128_small_alphabet main.cpp tests_entire_trie_128_small_alphabet.cpp)
-target_link_libraries(tests_entire_trie_128_small_alphabet sdsl succinct ${Boost_LIBRARIES})
-
+# Compile Catch's runner once for all test executables.
+add_library(coco_test_main OBJECT main.cpp)
+set(coco_tests tests_utils tests_single_encoders_128
+    tests_entire_trie_128_big_alphabet tests_entire_trie_128_small_alphabet
+    tests_serialize_load tests_boundaries)
+foreach(test IN LISTS coco_tests)
+    add_executable(${test} $<TARGET_OBJECTS:coco_test_main> ${test}.cpp)
+    target_link_libraries(${test} PRIVATE sdsl succinct)
+    target_compile_definitions(${test} PRIVATE COCO_DATASET_DIR="${PROJECT_SOURCE_DIR}/dataset")
+    if(test MATCHES "big_alphabet|serialize_load|boundaries")
+        target_compile_definitions(${test} PRIVATE BIG_ALPHABET)
+    endif()
+    add_test(NAME ${test} COMMAND ${test})
+endforeach()
