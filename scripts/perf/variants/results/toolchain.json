@@ -1,0 +1,21 @@
+{
+  "cpu": "Intel Core i7-13620H",
+  "shared_l3_mib": 24,
+  "compiler": "Clang 21.1.8",
+  "flags": "-O3 -DNDEBUG -march=native -std=gnu++20 -DBIG_ALPHABET",
+  "dependencies": "GCC 15.2 Release static libraries from /tmp/coco-release; portable FSST build",
+  "fsst_revision": "1755328b61f4e48ab7f53b315bbb20e8130059f2",
+  "c2_revision": "92c1b861456b2e5cb4085d317fc9ebb7c8e3d88e",
+  "build_includes": [
+    "include",
+    "/tmp/coco-release/_deps/ds2i",
+    "/tmp/coco-release/_deps/sux",
+    "/tmp/coco-release/_deps/sdsl-lite/include",
+    "/home/boffa/CLionProjects/serenedb/third_party/boost"
+  ],
+  "link_libraries": [
+    "/tmp/coco-release/libcoco_fsst.a",
+    "/tmp/coco-release/sdsl/lib/libsdsl.a",
+    "/tmp/coco-release/libsuccinct.a"
+  ]
+}

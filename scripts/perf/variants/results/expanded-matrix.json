@@ -1,0 +1,139 @@
+{
+  "default_code_bits": 128,
+  "cases": [
+    {
+      "name": "repo-english",
+      "path": "dataset/british-english.txt_no_suffixes_small",
+      "key_limit": 100000000,
+      "input_kind": "existing prefix-only repository sample"
+    },
+    {
+      "name": "repo-dna",
+      "path": "dataset/dna-k-mer.txt_no_suffixes_small",
+      "key_limit": 100000000,
+      "input_kind": "existing prefix-only repository sample"
+    },
+    {
+      "name": "repo-urls",
+      "path": "dataset/it-2004.urls_no_suffixes_small",
+      "key_limit": 100000000,
+      "input_kind": "existing prefix-only repository sample"
+    },
+    {
+      "name": "repo-proteins",
+      "path": "dataset/proteins.distinct_no_suffixes_small",
+      "key_limit": 100000000,
+      "input_kind": "existing prefix-only repository sample"
+    },
+    {
+      "name": "repo-trec",
+      "path": "dataset/trec-text.terms_no_suffixes_small",
+      "key_limit": 100000000,
+      "input_kind": "existing prefix-only repository sample"
+    },
+    {
+      "name": "repo-tpcds-id",
+      "path": "dataset/customer_id_column.txt.sorted_no_suffixes_small",
+      "key_limit": 100000000,
+      "input_kind": "existing prefix-only repository sample"
+    },
+    {
+      "name": "it2004-500MB",
+      "path": "scripts/perf/bitint256/work-large/it-2004-500MB.keys",
+      "key_limit": 100000000,
+      "input_kind": "historical ASCII-escaped complete keys from 500 MB source sample",
+      "input_manifest": "scripts/perf/bitint256/results/large/it2004-input.json"
+    },
+    {
+      "name": "hits-spread-URL",
+      "path": "scripts/perf/variants/data/hits-spread-URL.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "hits-spread-Title",
+      "path": "scripts/perf/variants/data/hits-spread-Title.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "hits-spread-SearchPhrase",
+      "path": "scripts/perf/variants/data/hits-spread-SearchPhrase.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "hits-1m-URL",
+      "path": "scripts/perf/variants/data/hits-1m-URL.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "hits-1m-Title",
+      "path": "scripts/perf/variants/data/hits-1m-Title.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "hits-1m-SearchPhrase",
+      "path": "scripts/perf/variants/data/hits-1m-SearchPhrase.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "otel-100k-Body",
+      "path": "scripts/perf/variants/data/otel-100k-Body.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/parquet-inputs.json"
+    },
+    {
+      "name": "tpch-sf10-c_name",
+      "path": "scripts/perf/variants/data/tpch-sf10-c_name.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/tpc-inputs.json"
+    },
+    {
+      "name": "tpch-sf10-l_comment",
+      "path": "scripts/perf/variants/data/tpch-sf10-l_comment.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/tpc-inputs.json"
+    },
+    {
+      "name": "tpch-sf10-ps_comment",
+      "path": "scripts/perf/variants/data/tpch-sf10-ps_comment.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/tpc-inputs.json"
+    },
+    {
+      "name": "tpcds-sf100-c_customer_id",
+      "path": "scripts/perf/variants/data/tpcds-sf100-c_customer_id.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/tpc-inputs.json"
+    },
+    {
+      "name": "tpcds-sf100-c_email_address",
+      "path": "scripts/perf/variants/data/tpcds-sf100-c_email_address.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/tpc-inputs.json"
+    },
+    {
+      "name": "tpcds-sf100-i_item_desc",
+      "path": "scripts/perf/variants/data/tpcds-sf100-i_item_desc.keys",
+      "key_limit": 100000000,
+      "input_kind": "complete UTF-8 values",
+      "input_manifest": "scripts/perf/variants/results/tpc-inputs.json"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "timestamp_utc": "2026-10-28T21:59:14Z",
+  "bench": "/tmp/coco-variants-bench",
+  "output": "scripts/perf/variants/results/it2004-500MB",
+  "case": [
+    "it2004-500MB,scripts/perf/bitint256/work-large/it-2004-500MB.keys,100000000"
+  ],
+  "modes": "sorted,prime,cc1,cc",
+  "bits": "128,256",
+  "trials": 1,
+  "cpu": 0,
+  "memory_mib": 4096,
+  "binary_sha256": "ab7e085dccba605d67992af7140cd6d92a150b2691332b2262a81383c875bdab"
+}

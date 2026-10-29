@@ -35,7 +35,7 @@ jobs:
           cmake --build build-sanitize --target tests_boundaries tests_sorted_builder --parallel 2
           ctest --test-dir build-sanitize -R 'tests_(boundaries|sorted_builder)' --output-on-failure
 
-  wide-alphabet:
+  wide-alphabet-and-variants:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -49,10 +49,10 @@ jobs:
           cmake -S . -B build-wide -DCMAKE_CXX_COMPILER=clang++
           -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS_DEBUG="-O1 -g"
           -DCOCO_REQUIRE_UINT256=ON -DCOCO_SANITIZERS=ON
-      - name: Build wide alphabet and alphabet tests
-        run: cmake --build build-wide --target tests_alphabet_width --parallel 2
+      - name: Build wide alphabet and paper variant tests
+        run: cmake --build build-wide --target tests_alphabet_width tests_variants --parallel 2
       - name: Test wide integers, binary keys, tails, and serialization
         env:
           UBSAN_OPTIONS: halt_on_error=1
           ASAN_OPTIONS: detect_leaks=1
-        run: ctest --test-dir build-wide -R tests_alphabet_width --output-on-failure
+        run: ctest --test-dir build-wide -R 'tests_(alphabet_width|variants)' --output-on-failure

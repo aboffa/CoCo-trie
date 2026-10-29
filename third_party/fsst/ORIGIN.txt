@@ -1,0 +1,5 @@
+Source: https://github.com/cwida/fsst
+Revision: 1755328b61f4e48ab7f53b315bbb20e8130059f2
+Portable CMake target supplied by CoCo-trie; upstream license retained.
+Local fix: remove the alignment-implying cast from the unaligned memcpy store in fsst.h.
+Trailing whitespace normalized for repository checks.

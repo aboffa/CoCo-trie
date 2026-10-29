@@ -44,7 +44,21 @@ add_executable(coco-construction-bench scripts/perf/construction/benchmark.cpp)
 target_link_libraries(coco-construction-bench PRIVATE sdsl succinct)
 target_compile_definitions(coco-construction-bench PRIVATE BIG_ALPHABET)
 
+
+
+
+
+
 include(CTest)
 if(BUILD_TESTING)
     add_subdirectory(test)
 endif()
+
+# Pinned, licensed C² reference implementation and FSST tail compressor.
+add_library(coco_fsst STATIC third_party/fsst/libfsst.cpp third_party/fsst/fsst_avx512.cpp)
+target_include_directories(coco_fsst PUBLIC "${PROJECT_SOURCE_DIR}/third_party/fsst")
+add_library(coco_variants INTERFACE)
+target_link_libraries(coco_variants INTERFACE sdsl succinct coco_fsst)
+add_executable(coco-variants-bench scripts/perf/variants/benchmark.cpp)
+target_link_libraries(coco-variants-bench PRIVATE coco_variants)
+target_compile_definitions(coco-variants-bench PRIVATE BIG_ALPHABET)

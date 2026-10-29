@@ -1,0 +1,7 @@
+Source: https://github.com/gt-alg-kit/C2
+Revision: 92c1b861456b2e5cb4085d317fc9ebb7c8e3d88e
+Paper: https://arxiv.org/abs/2606.16104
+Adapted for CoCo-trie: namespaced integration, wide integer codes, checked byte APIs, serialization, and correctness fixes.
+Optional candidate-depth sampling is exposed as depth_step; its default of 1 retains exhaustive search.
+Trailing whitespace normalized for repository checks.
+Wide integer bit widths use at most four 64-bit leading-zero checks.

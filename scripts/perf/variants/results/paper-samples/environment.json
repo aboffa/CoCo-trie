@@ -1,0 +1,16 @@
+{
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "timestamp_utc": "2026-10-28T21:50:49Z",
+  "bench": "/tmp/coco-variants-bench",
+  "output": "scripts/perf/variants/results/paper-samples",
+  "case": [
+    "english,dataset/british-english.txt_no_suffixes_small,100000000",
+    "urls,dataset/it-2004.urls_no_suffixes_small,100000000",
+    "proteins,dataset/proteins.distinct_no_suffixes_small,100000000"
+  ],
+  "modes": "sorted,prime,cc1,cc",
+  "bits": "128,256",
+  "trials": 3,
+  "cpu": 0,
+  "memory_mib": 4096
+}

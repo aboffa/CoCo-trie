@@ -1,0 +1,2 @@
+dataset,trial,mode,bits,depth_step,keys,key_bytes,build_seconds,peak_rss_kib,index_bytes,hit_ns,miss_ns,miss_queries,checksum
+it2004-500MB,0,cc,256,2,6116714,494013686,132.09,3427060,62301906,2565.7,3333.33,100274,37414196073962

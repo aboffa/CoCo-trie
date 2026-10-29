@@ -417,6 +417,9 @@ namespace succinct {
                     m_buf >>= l;
                 } else {
                     val = m_buf;
+                    // skip_zeros() uses an empty buffer to trigger a refill.
+                    // A full-word read must not leave consumed bits behind.
+                    m_buf = 0;
                 }
                 m_avail -= l;
                 m_pos += l;
