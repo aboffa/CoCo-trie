@@ -39,10 +39,15 @@ Dependencies and adapted headers are staged automatically under `build/_deps`; t
 
 ## Run the example 🏃
 
-The `example.cpp` file shows how to index and compress a vector of strings with the CoCo-trie:
+Build and query a CoCo-trie, then save it to a binary file and reload it:
 
 
 ```c++
+#include "CoCo-trie_v2.hpp"
+#include <fstream>
+#include <string>
+#include <vector>
+
 int main() {
     std::vector<std::string> dataset = {"compressed", "data", "structure", "trie"};
     CoCo_v2<> coco(dataset);
@@ -55,6 +60,20 @@ int main() {
     coco.look_up("trie"); // returns id 4
 
     coco.look_up("SPIRE"); // returns size_t(-1): not found
+
+    // Serialize the index, including its alphabet configuration.
+    std::ofstream out("dictionary.coco", std::ios::binary);
+    if (!out) return 1;
+    coco.serialize(out);
+    out.close();
+    if (!out) return 1;
+
+    // Deserialize without rebuilding from the original strings.
+    std::ifstream in("dictionary.coco", std::ios::binary);
+    if (!in) return 1;
+    CoCo_v2<> restored(in);
+    restored.look_up("compressed"); // same ID as before serialization
+    restored.look_up("SPIRE");      // returns size_t(-1): not found
 
     return 0;
 }
@@ -69,7 +88,7 @@ Stored keys are byte strings, including embedded NUL. The default 128-bit alphab
 
 ## Construction from sorted keys
 
-An opt-in `CoCo_v2` constructor avoids building the intermediate character trie:
+The opt-in sorted-key constructor avoids building the intermediate character trie. It uses adjacent longest common prefixes (LCPs) to compute compaction costs bottom-up and emit the index directly from sorted key intervals, reducing construction time and memory use.
 
 ```c++
 std::sort(keys.begin(), keys.end());
@@ -77,43 +96,7 @@ keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
 CoCo_v2<> coco(coco_sorted_unique, keys);
 ```
 
-The input must be strictly sorted and deduplicated; violations throw `std::invalid_argument`. This path currently supports `MIN_L=1`. It retains complete keys, including prefix keys and embedded NUL; it does not remove suffixes. Prefix-only datasets can also be supplied explicitly. The existing constructors remain available.
-
-Construction closes prefix intervals using adjacent longest common prefixes (LCPs), computes the original compaction costs bottom-up, and then emits the index from sorted intervals. The candidate scorer, tie rules, fixed-length setting, and space relaxation are shared with or reproduce the original builder. The result uses the existing lookup and serialization format. Tests compare serialized bytes, IDs, costs, and reload behavior against the original builder, including the experimental 256-bit adapter.
-
-Temporary decisions occupy two bytes per distinct character prefix (including the root), plus one machine-word offset per key and an active stack proportional to maximum key length times the 63 candidate levels. Input strings, output buffers, and the emission queue require additional memory. Decisions and offsets are released after construction. This is an in-memory builder; it does not yet spill metadata to disk.
-
-Measured construction medians over three trials, pinned to one CPU, using GCC 15.2 with `-O3 -DNDEBUG -march=native`, 128-bit codes, and `CoCo_v2<1, Code, 18, 0>`:
-
-| Dataset | Unique keys | Original → sorted build time | Original → sorted peak RSS |
-|---|---:|---:|---:|
-| Customer IDs, supplied prefix-only sample | 629,662 | 0.888 → 0.077 s | 455 → 45 MiB |
-| TREC, supplied prefix-only sample | 855,665 | 0.963 → 0.139 s | 559 → 54 MiB |
-| Random 40-character complete keys | 64,000 | 8.14 → 1.39 s | 3,554 → 19 MiB |
-
-All 48 runs across eight cases produced matching serialization hashes and lookup checksums between builders. Build time includes alphabet inference, optimization, emission, and destruction of construction temporaries; it excludes file loading, sorting, and deduplication. Peak RSS includes input loading and process overhead. These measurements concern construction, not query speed, and the small-case RSS floor should not be interpreted as exact auxiliary memory.
-
-With the experimental 256-bit adapter and Clang 21, the same comparison reduced protein-sample construction from 4.00 to 0.248 seconds and 419 to 18 MiB; all 12 runs across two cases matched between builders. Compiler differences mean these figures should not be used as a direct 128-versus-256 comparison.
-
-Large complete-key inputs also finished with the original space optimizer, using the same 128-bit build configuration. These are single trials under a 4 GiB per-process virtual-memory cap:
-
-| Dataset | Unique keys | Key bytes, excluding record framing | Sorted build time | Peak RSS | Final index |
-|---|---:|---:|---:|---:|---:|
-| ClickBench 1M-row URL sample | 327,533 | 116,892,051 | 98.1 s | 450 MiB | 88.1 MiB |
-| it-2004, 500 MB source truncation at complete records | 6,116,714 | 494,013,686 | 49.8 s | 1,169 MiB | 91.4 MiB |
-
-Every stored-key lookup passed, along with sampled suffix/prefix queries checked against the input set. The original builder did not finish either case under the same cap: ClickBench terminated with SIGSEGV (cause not diagnosed), and it-2004 reported `std::bad_alloc`. Therefore these large runs have no reference serialization comparison or measured speedup ratio. [Large-input trials](scripts/perf/construction/results/large/trials.csv) and [original-builder failures](scripts/perf/construction/results/large/failures.json) are retained.
-
-Raw measurements: [128-bit trials](scripts/perf/construction/results/native128/trials.csv), [256-bit trials](scripts/perf/construction/results/bit256/trials.csv). To reproduce the native baseline:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCOCO_NATIVE=ON
-cmake --build build --target coco-construction-bench --parallel
-python3 scripts/perf/construction/run.py --bench build/coco-construction-bench \
-  --output /tmp/coco-construction-results
-```
-
-The driver supports repeated `--case NAME,INPUT,KEY_LIMIT` arguments, newline-separated input or the length-prefixed `.keys` files used by the uint256 experiments, `--trials`, `--cpu`, and a per-process virtual-memory limit via `--memory-mib` (default 4096). Its `streaming` mode names the sorted/LCP builder; it still holds the input and decision array in memory. Query validation runs after construction timing and RSS capture.
+Keys must be strictly sorted and deduplicated; invalid input throws `std::invalid_argument`. This constructor currently supports `MIN_L=1` and preserves complete keys, including prefix keys and embedded NUL. It retains the original compaction policy, lookup behavior, and serialization format. Input and temporary metadata remain in memory.
 
 ## Parametric alphabet maps and 256-bit codes
 
@@ -141,114 +124,9 @@ GCC continues to build the 128-bit path. Configure with `-DCOCO_REQUIRE_UINT256=
 
 Serialization retains the existing v2 header for 128-bit maps and adds a v3 header carrying the bitmap width and a wider radix when necessary. The loader checks code/map compatibility; the native-endian, same-word-size and trusted-input restrictions still apply. The old experimental staging tool remains available for reproducing historical experiments, with its original 128-bit map configuration.
 
-## CoCoPrime and CoCoCC
+## Optional variants
 
-[CoCo-variants.hpp](include/CoCo-variants.hpp) adds the variants from [Zhang, Zhao, and Xu, *C²: Cache-Conscious Succinct Tries with Adaptive Unary Path Compression*](https://arxiv.org/abs/2606.16104). They use an adapted, pinned copy of the [authors' reference implementation](https://github.com/gt-alg-kit/C2), with source revisions and licenses in [third_party/c2](third_party/c2) and [third_party/fsst](third_party/fsst).
-
-| Type | Construction | Final topology |
-|---|---|---|
-| `CoCo_v2` with `coco_sorted_unique` | Our sorted/LCP builder, original scoring policy | Original CoCo LOUDS |
-| `CoCoPrime<Code>` | Paper's compact FST intermediate trie and bottom-up optimizer | Original CoCo LOUDS with rank/select supports |
-| `CoCoCC<Code>` | Same paper optimizer | LOUDS-Sparse with interleaved bitvectors/ranks and a child-navigation functional index |
-
-The variants default to 128-bit codes, an FSST tail container, and zero recursion. `uint64_t` selects the reference implementation's original code width; `uint256_t` enables wider codes with Clang. The paper optimizer retains its 32-level macro-node limit and scoring policy, so its compaction decisions can differ from the original CoCo optimizer. Space relaxation defaults to 0%; set `options.space_relaxation = 5` for the paper's 5% setting.
-
-```c++
-#include "CoCo-variants.hpp"
-
-CoCoPrime<> prime(keys);  // sorts and deduplicates internally
-CoCoCC<> cc(keys);
-size_t id = cc.look_up("example");  // size_t(-1) if absent
-
-coco_variant_options options;
-options.tails = coco_variant_options::tail::sorted; // C1-only comparison
-CoCoCC<> topology_only(keys, options);
-options.tails = coco_variant_options::tail::fsst;
-options.max_recursion = 2; // optional adaptive recursion; zero is the default
-CoCoCC<> recursive(keys, options);
-
-options.depth_step = 2; // evaluate jump lengths 1, 3, 5, ... (default: every depth)
-#ifdef COCO_HAS_UINT256
-CoCoCC<uint256_t> sampled(keys, options); // requires Clang's wide integers
-#endif
-
-std::ofstream out("dictionary.coco", std::ios::binary);
-cc.serialize(out);
-out.close();
-std::ifstream in("dictionary.coco", std::ios::binary);
-CoCoCC<> restored(in);
-```
-
-CMake consumers should link `coco_variants`, which supplies the FSST library and existing succinct dependencies. Both variants support empty dictionaries, empty strings, prefix keys, duplicates, and full byte strings. IDs are stable across serialization and unique within a dictionary, but are not promised to match IDs from other variants or lexicographic ranks. Their index format records variant and code width; reload reconstructs rank/select indexes from the stored topology, without retaining or rebuilding from the original key set.
-
-Suffix links use the reference optimizer's predecessor/lower-bound candidate search followed by a prefix check and exact tail comparison. The integration fixes reference-code failures involving bytes present only in tails, signed-byte tail comparisons, long FSST tail mismatches, alphabet boundary serialization, and out-of-bounds bit copying. Binary keys containing NUL use an order-preserving escape for bytes 0 and 1 because the reference backend reserves NUL; this can increase their encoded length. Plain text without NUL uses the direct path.
-
-The paper backend uses 32-bit topology positions. The public constructors conservatively reject input above roughly 2 GiB including key framing, both before and after escaping. Input, sorting copies, intermediate summaries, and output still consume RAM. Files are native-endian and intended for trusted input, as with the original index.
-
-To benchmark construction and shuffled full-key lookup passes, including separate C1/C2 comparisons:
-
-```bash
-cmake -S . -B build-clang -DCMAKE_CXX_COMPILER=clang++ \
-  -DCMAKE_BUILD_TYPE=Release -DCOCO_NATIVE=ON -DCOCO_REQUIRE_UINT256=ON
-cmake --build build-clang --target coco-variants-bench --parallel 2
-python3 scripts/perf/variants/run.py --bench build-clang/coco-variants-bench \
-  --output /tmp/coco-variants-results \
-  --case urls,dataset/it-2004.urls_no_suffixes_small,100000000 --trials 3
-```
-
-Modes are `sorted` (our LCP constructor), `prime` (original topology, sorted tails), `cc1` (cache-conscious topology, sorted tails), `cc` (cache-conscious topology, FSST tails), and optional `prime-fsst` (original topology, FSST tails). All default to zero recursion. The driver isolates processes, pins one CPU, caps virtual memory at 4 GiB, validates every hit and every sampled miss, and records build seconds, peak RSS, index size, and hit/miss latency. Sorting/file loading and query generation are outside construction timing; peak RSS includes input loading, and the variants' internal construction copies are timed. At least two timed shuffled passes follow a full-key correctness pass; the expanded benchmark repeats small inputs until it has issued at least one million hit queries and one million miss queries. Pass counts are included in its CSV. Do not interpret these measurements as a reproduction of the paper's hardware results.
-
-For the paper variants, `--depth-step 2` samples candidate jump lengths 1, 3, 5, … instead of evaluating every depth. Intermediate levels still contribute labels and child ranges, but their encoding costs and descendant-cost totals are skipped. This is an optional construction heuristic: it preserves exact lookup and serialization, but can change index size and query latency. The default remains exhaustive search (`--depth-step 1`); the original sorted/LCP builder currently uses exhaustive search only.
-
-### Initial large-data comparison
-
-The 500 MB it-2004 source sample contains 6,116,714 distinct complete keys. This historical input uses reversible ASCII escaping for 65,095 rows; its [input manifest](scripts/perf/bitint256/results/large/it2004-input.json) records the exact sample. On an i7-13620H with 24 MiB shared L3, every resulting index is larger than L3. These are **single process trials**, using two timed passes for hits and misses; they establish working large-data configurations, not universal performance rankings. [Raw results](scripts/perf/variants/results/it2004-500MB/trials.csv), [toolchain](scripts/perf/variants/results/toolchain.json).
-
-| Variant | Code bits | Build (s) | Peak RSS (GiB) | Index (MiB) | Hit (µs) | Miss (µs) |
-|---|---:|---:|---:|---:|---:|---:|
-| CoCo, sorted/LCP | 128 | 66.6 | 1.14 | 91.43 | 2.280 | 2.024 |
-| CoCo, sorted/LCP | 256 | 145.3 | 1.10 | 81.12 | 2.260 | 1.909 |
-| CoCoPrime, sorted tails | 128 | 50.6 | 3.21 | 62.72 | 2.262 | 1.884 |
-| CoCoPrime, sorted tails | 256 | 215.0 | 3.20 | 62.57 | 2.576 | 2.064 |
-| CoCoCC, sorted tails | 128 | 52.5 | 3.20 | 62.44 | 2.311 | 1.707 |
-| CoCoCC, sorted tails | 256 | 227.3 | 3.20 | 62.28 | 2.143 | 1.672 |
-| CoCoCC, FSST tails | 128 | 42.8 | 3.27 | 58.05 | 2.084 | 1.472 |
-| CoCoCC, FSST tails | 256 | 238.4 | 3.27 | 57.89 | 2.323 | 1.710 |
-
-The paper variants reduce final index space on this input, but their intermediate representation consumes substantially more construction memory than the sorted/LCP builder. Wider codes are optional; 128-bit codes remain the library and benchmark default.
-
-A separate same-executable 256-bit CoCoCC comparison measured `depth_step=1` versus `2`: build time 219.7 → 132.1 s, index size 57.89 → 59.42 MiB, hit latency 2.164 → 2.566 µs, and miss latency 1.715 → 3.333 µs. Sampling saves about 40% construction time here at a lookup cost. These are preliminary single trials, so exhaustive search remains the default. [Step 1](scripts/perf/variants/results/it2004-step1/trials.csv), [step 2](scripts/perf/variants/results/it2004-step2/trials.csv).
-
-### Expanded string-column benchmark
-
-The [matrix](scripts/perf/variants/results/expanded-matrix.json) includes the six existing prefix-only repository samples, the historical 500 MB it-2004 input, and 13 complete-string database dictionaries:
-
-| Source | String columns | Selection basis |
-|---|---|---|
-| ClickBench 100k and 1m rows | `URL`, `Title`, `SearchPhrase` | Supplied local Parquet samples |
-| OpenTelemetry 100k rows | `Body` | Supplied local Parquet sample |
-| TPC-H SF10 | `c_name`, `l_comment`, `ps_comment` | Named explicitly in the [FSST evaluation, §6/Table 1](https://www.vldb.org/pvldb/vol13/p2649-boncz.pdf) |
-| TPC-DS SF100 | `c_customer_id`, `c_email_address`, `i_item_desc` | IDs are used by [CoCo's evaluation](https://www.boffa.top/files/IS.pdf); the other string columns are part of the all-string-column evaluation in [Liu et al., §5.1.3](https://link.springer.com/article/10.1007/s00778-025-00911-1) |
-
-Column selection follows those publications; our scale factors, sampling, and dictionary lookup workload are not reproductions of their compression experiments. The new inputs preserve raw UTF-8, embedded bytes, and complete values. Nulls are omitted, duplicates are removed, and each column is capped at 500,000,000 bytes of complete source values before deduplication. Small dictionaries are reported as such; source size does not imply an index larger than cache. The normal CoCo benchmark selects a 256-bit bitmap only when its byte interval requires it, keeping 128-bit codes.
-
-[Parquet provenance](scripts/perf/variants/results/parquet-inputs.json) and [TPC provenance](scripts/perf/variants/results/tpc-inputs.json) record source rows, nulls, sampled bytes, distinct keys, lengths, and SHA-256 hashes. TPC values are read from the selected column blocks of DuckDB's published remote databases; complete multi-GB databases are not downloaded locally. Data files are ignored by Git.
-
-```bash
-python -m pip install duckdb==2.0.0 pyarrow==26.0.0
-python scripts/perf/variants/prepare_columns.py --families parquet \
-  --parquet-source /path/to/scripts/perf/results/fm-index \
-  --output scripts/perf/variants/data \
-  --manifest scripts/perf/variants/results/parquet-inputs.json
-python scripts/perf/variants/prepare_columns.py --families tpch,tpcds \
-  --output scripts/perf/variants/data \
-  --manifest scripts/perf/variants/results/tpc-inputs.json
-python scripts/perf/variants/run.py --bench build-clang/coco-variants-bench \
-  --cases-json scripts/perf/variants/results/expanded-matrix.json \
-  --output /tmp/coco-expanded-results --bits 128 --trials 3
-```
-
-The published matrix expects the earlier it-2004 `.keys` sample too; its preparation is documented in the [historical benchmark](scripts/perf/bitint256/README.md). Every run validates all hits and sampled misses, with one isolated process, one pinned CPU, and a 4 GiB virtual-memory cap.
+[CoCoPrime and CoCoCC](include/CoCo-variants.hpp) implement variants from the [C² paper](https://arxiv.org/abs/2606.16104), adapted from the [authors’ implementation](https://github.com/gt-alg-kit/C2). They are optional; this repository focuses on the original CoCo-trie. CMake users can link `coco_variants` to use them.
 
 ## Datasets 💽
 Examples of already preprocessed small datasets are in the directory `dataset`.
@@ -258,6 +136,7 @@ Already preprocessed big datasets are available [here](https://drive.google.com/
 Bigger datasets are available here:
 
 - https://law.di.unimi.it/webdata/it-2004/
+- https://law.di.unimi.it/webdata/gsh-2015/
 - http://pizzachili.dcc.uchile.cl/texts/xml/
 - http://pizzachili.dcc.uchile.cl/texts/protein/
 - https://www.tpc.org/tpcds/
@@ -292,32 +171,6 @@ cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug -DCOCO_SANITIZERS=ON
 cmake --build build-sanitize --target tests_boundaries --parallel
 UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir build-sanitize -R tests_boundaries --output-on-failure
 ```
-
-## Development TODOs
-
-### 1. Implement and measure 256-bit integer codes — in progress
-
-- [x] Integrate optional `unsigned _BitInt(256)` codes and independent bitmap widths, including full-byte alphabets, packed reads/writes, arithmetic bounds, and serialization. Retain the 128-bit baseline.
-- [ ] Exploit the extra characters per code to make longer jumps; optimize the added encoding, search, and construction costs. Test the hypothesis that fewer jumps can yield substantial lookup improvements.
-- [ ] Benchmark inside CoCo on the paper's datasets, ClickBench, and OpenTelemetry. Use complete-record samples up to 500 MB where available, report distinct keys and actual index size, and test indexes larger than the last-level cache with shuffled full-key query passes.
-- [ ] Report successful/unsuccessful lookup latency, node visits, index space, construction time, and peak construction memory. Keep normal space-optimizer results distinct from controlled fixed-jump experiments, and test correctness and serialization across both widths.
-
-Historical experimental results and limitations: [256-bit benchmarks](scripts/perf/bitint256/README.md). Production support is now integrated; the fixed-jump experiments remain distinct from normal optimizer measurements. Work on choosing widths and reducing wide-arithmetic costs remains open.
-
-### 2. Make index construction faster and substantially less memory hungry — initial path implemented
-
-- [x] Add an opt-in sorted, deduplicated-key constructor for `CoCo_v2` with `MIN_L=1`, without materializing a pointer-based node for every character. Accept complete keys or explicitly preprocessed prefix-only keys; preserve the chosen input semantics.
-- [x] Use prefix/LCP boundaries and compact summaries to compute compaction costs and emit the compact index. Preserve the existing scoring objective and verify byte-for-byte output, IDs, and lookup behavior against the original builder.
-- [ ] Bound temporary storage, avoid redundant per-node allocations and repeated descendant traversals, and separately measure input preprocessing, optimization, and encoding time.
-- [ ] Establish scaling curves for build time and peak RSS versus input bytes and key count. Record full-string and prefix-only workloads separately, and verify that preprocessing does not silently change the promised lookup semantics.
-
-### 3. Implement the paper's variants as `CoCoPrime` and `CoCoCC` — implemented
-
-Implementation based on [C²: Cache-Conscious Succinct Tries with Adaptive Unary Path Compression](https://arxiv.org/abs/2606.16104) and its [reference implementation](https://github.com/gt-alg-kit/C2):
-
-- [x] **`CoCoPrime` = the paper's CoCo′.** Reproduce its improved construction routine while retaining the original CoCo topology/bitvector design. Section 5.2 builds the intermediate trie using C²-FST/LOUDS-Sparse, so same-depth descendants occupy contiguous storage. Compare this approach with the sorted-string scanning builder in TODO 2.
-- [x] **`CoCoCC` = the paper's C²-CoCo.** Implement its LOUDS-Sparse topology, C₁ cache-conscious layout and functional index, then C₂ unary-path compression with FSST tails. Handle tail links with the required lower-bound/prefix check. Reproduce the paper's zero-recursion CoCo configuration first and expose recursion separately.
-- [x] Keep CoCo, CoCoPrime, and CoCoCC independently selectable. Validate lookup behavior and serialization, benchmark construction memory/time and index space/query latency, and measure C₁ and C₂ separately before combining them. Evaluate 128- and 256-bit codes across the variants where applicable.
 
 ## License 🪪
 
