@@ -32,6 +32,15 @@ TEST_CASE("Unsigned byte intervals work with a 128-bit alphabet map") {
     binary_roundtrip<CoCo_v2<>>(keys);
 }
 
+TEST_CASE("An ancestor does not collapse below a subtrie whose alphabet overflows the code") {
+    // Under "b", 94 characters first appear 19 levels down: too wide to collapse
+    // that deep into a 128-bit code. The "a" branch alone allows deeper collapses,
+    // which must still account for the characters under "b".
+    std::vector<std::string> keys{"a"+std::string(40,'x')};
+    for (char c='!';c<='~';++c) keys.push_back("b"+std::string(18,'x')+c+std::string(20,'x'));
+    binary_roundtrip<CoCo_v2<>>(keys);
+}
+
 #ifdef COCO_HAS_UINT256
 TEST_CASE("Full byte alphabet and wide codes preserve exact binary keys") {
     alphamap<uint256_t> map;

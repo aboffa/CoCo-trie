@@ -24,7 +24,9 @@ class sorted_trie_builder {
     struct Frame {
         size_t first_key = 0, decision = 0;
         size_t height = 0, max_child_levels = 0, safe_levels = 0, best = 0;
-        bool terminal = false;
+        // Levels whose maps are complete when a descendant's map overflowed.
+        size_t known_levels = levels;
+        bool terminal = false, truncated = false;
         std::array<size_t, levels> internal{}, leaves{}, costs{};
         std::array<Bitmap, levels + 1> maps{};
     };
@@ -93,11 +95,11 @@ class sorted_trie_builder {
 
         auto finish = [&](Frame& f, size_t d, size_t end) {
             if (!f.height) return;
-            size_t limit = std::min(levels, f.max_child_levels + 1);
+            size_t limit = std::min({levels, f.max_child_levels + 1, f.known_levels});
             for (size_t i = 1; i <= limit; ++i) {
                 f.maps[i] |= f.maps[i - 1];
                 const size_t radix = alphamap(f.maps[i]).rankmax() + 1;
-                if (i > safe_limit(radix)) { limit = i - 1; break; }
+                if (i > safe_limit(radix)) { limit = i - 1; f.truncated = true; break; }
             }
             f.safe_levels = limit;
             const size_t global_limit = std::min({limit, size_t(MaxLevels), sizeof(Code) * CHAR_BIT / log_sigma});
@@ -154,6 +156,11 @@ class sorted_trie_builder {
             parent.maps[0] |= Bitmap(1) << (alphabet.offset(ch));
             parent.height = std::max(parent.height, std::min(levels, child.height + 1));
             parent.max_child_levels = std::max(parent.max_child_levels, child.safe_levels);
+            if (child.truncated) {
+                // Deeper parent maps would lack the characters below the child's last map.
+                parent.truncated = true;
+                parent.known_levels = std::min(parent.known_levels, child.safe_levels + 1);
+            }
             parent.costs[0] += child.best;
             if (!child.height) ++parent.leaves[0];
             else {
