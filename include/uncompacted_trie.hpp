@@ -55,6 +55,9 @@ public:
         // represents the end of a word
         bool isEndOfWord;
         uint8_t l_idx;
+        // an alphabet at or below this node exceeded code_type, so alphamaps
+        // end before the subtrie does and ancestors must not collapse past them
+        bool alphamaps_truncated = false;
         uint64_t bc = BASE_COST;
         std::vector<size_t> spacecost;
         std::vector<node_type> node_type_vec;
@@ -165,6 +168,7 @@ public:
 
         node->max_l_fixed = 0;
         node->max_l_amap = 0;
+        node->alphamaps_truncated = false;
 
         max_l_idx = 0;
 
@@ -298,13 +302,19 @@ public:
         }
 
         auto max_l_children = 0;
+        size_t max_l_known = MAX_L_THRS_amap;
         for (auto &child: source->children) {
             max_l_children = std::max<size_t>(max_l_children, child.second->max_l_amap);
+            if (child.second->alphamaps_truncated) {
+                // deeper levels would lack the characters below the child's last alphamap
+                source->alphamaps_truncated = true;
+                max_l_known = std::min<size_t>(max_l_known, child.second->max_l_amap + 1);
+            }
         }
 
         static_assert(MAX_L_THRS <= MAX_L_THRS_amap);
         // max_l_children + 1 is <= height
-        source->max_l_amap = std::min<size_t>(max_l_children + 1, MAX_L_THRS_amap);
+        source->max_l_amap = std::min<size_t>(std::min<size_t>(max_l_children + 1, MAX_L_THRS_amap), max_l_known);
         source->spacecost = space_cost(source);
         // optimal selection of the number of levels to collapse
         if (l_fixed == 0) {
@@ -385,6 +395,7 @@ public:
             if (!check_l_max_amap(local_as, i)) { // overflow
                 source->max_l_amap = i - 1;
                 source->alphamaps.pop_back();
+                source->alphamaps_truncated = true;
                 break;
             }
         }
