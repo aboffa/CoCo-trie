@@ -530,8 +530,11 @@ public:
                 size_t space_bits_packed = -1, space_bits_elias_fano = -1, space_bits_bitvector = -1;
 
                 space_bits_packed = n * logu;
-                size_t u_div_n = u / n;
-                if (i < MAX_L_THRS_EF and u_div_n < MAX_U_DIV_N) {
+                // Keep the density comparison at code width. The Elias-Fano
+                // writer and reader use 64 bits; the delta header stores u + 1.
+                const code_type u_div_n = u / n;
+                const code_type ef_max = std::numeric_limits<uint64_t>::max() - 1;
+                if (i < MAX_L_THRS_EF and u <= ef_max and u_div_n < MAX_U_DIV_N) {
                     space_bits_elias_fano = ds2i::compact_elias_fano<code_type>::bitsize(params, u, n);
                     space_bits_elias_fano += bits_delta_code(u);
                 }
@@ -569,7 +572,7 @@ public:
 
                     space_bits_packed_amap = (n * logu_real) + alphabet_.bitmap_bits(alphamap::width);
 
-                    if (i < MAX_L_THRS_EF and u_div_n < MAX_U_DIV_N) {
+                    if (i < MAX_L_THRS_EF and u_real <= ef_max and u_div_n < MAX_U_DIV_N) {
                         space_bits_elias_fano_amap =
                                 ds2i::compact_elias_fano<code_type>::bitsize(params, u_real, n) + alphabet_.bitmap_bits(alphamap::width);
                         space_bits_elias_fano_amap += bits_delta_code(u_real);

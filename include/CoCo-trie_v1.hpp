@@ -63,6 +63,9 @@ public:
 
     static void
     write_elias_fano(code_type u, std::vector<code_type> const &vec, succinct::bit_vector_builder &bvb) {
+        // write_delta stores u + 1 in a uint64_t.
+        if (u >= code_type(std::numeric_limits<uint64_t>::max()))
+            throw std::overflow_error("Elias-Fano universe exceeds the 64-bit delta-code limit");
         assert(u > 1);
         size_t n = vec.size();
         size_t prev_pos = bvb.size();
